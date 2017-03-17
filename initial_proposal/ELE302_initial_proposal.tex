@@ -2,7 +2,7 @@
     \usepackage[margin=0.9in]{geometry}
     \usepackage{graphicx, hyperref, booktabs}
     % rubber: set program xelatex
-    \usepackage[calc,linalg,prob,stix]{bccho}
+    \usepackage[stix]{bccho}
 
 % Begin document
 
@@ -20,10 +20,31 @@
     \end{center}
 
 \section{Overview}
-$\mu^2\Sigma$
-% TODO: General overview of our project idea
+\begin{itemize}
+    \item \textbf{Objective:} To build a robot/car capable of playing basic ping pong
+    \item \textbf{General principles:}
+        \begin{itemize}
+            \item We will use a camera (or two for stereoscopic vision if necessary) to track a ping pong ball and estimate its trajectory.
+            \item We will then move the robot to the required location (ideally using omni wheels or Mecanum wheels) and hit the ball back over the net.
+            \item We will use a combination of dead reckoning and a grid laid on the floor to determine the position of the robot
+        \end{itemize}
+\end{itemize}
 
-\section{Goals}
+\section{Goals and checkpoints}
+\subsection*{Hardware}
+\begin{enumerate}[label=\textbf{(\arabic*)}]
+    \item Moving with omniwheels
+    \item Tracking position
+    \item Camera interfacing
+    \item Movement commands
+\end{enumerate}
+
+\subsection*{Software}
+\begin{enumerate}[label=\textbf{(\arabic*)}]
+    \item Determine the location of a static ping pong ball based on $x$/$y$ coordinates and ball size
+    \item Predict the trajectory
+    \item Calculate position to move to
+\end{enumerate}
 % TODO: Including natural stopping points
 
 \section{Progress steps}
