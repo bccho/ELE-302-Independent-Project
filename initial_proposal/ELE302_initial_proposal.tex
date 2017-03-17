@@ -30,27 +30,39 @@
         \end{itemize}
 \end{itemize}
 
-\section{Goals and checkpoints}
+\section{Progress steps and checkpoints}
 \subsection*{Hardware}
 \begin{enumerate}[label=\textbf{(\arabic*)}]
-    \item Moving with omniwheels
-    \item Tracking position
-    \item Camera interfacing
-    \item Movement commands
+    \item Move around with new drive system (build H-bridges and other relevant circuit boards as necessary)
+    \item Track position of robot with grid and dead reckoning (with accelerometer and gyro)
+    \item Set up interface between camera and primary processor (either a Raspberry Pi or an Arduino) and PSoC
+    \item Set up interface between primary processor and PSoC
 \end{enumerate}
 
 \subsection*{Software}
 \begin{enumerate}[label=\textbf{(\arabic*)}]
-    \item Determine the location of a static ping pong ball based on $x$/$y$ coordinates and ball size
-    \item Predict the trajectory
-    \item Calculate position to move to
+    \item Set up feedback control to execute movement commands
+    \item Determine the location of a static ping pong ball based on camera $x$/$y$ coordinates and ball size
+    \item Predict the trajectory of a moving ping pong ball based on camera measurements
+    \item Calculate position to move car to in order to hit ping pong ball
 \end{enumerate}
-% TODO: Including natural stopping points
 
-\section{Progress steps}
-% TODO: General idea of how to do it
+\subsection*{Intermediate goals}
+\begin{enumerate}[label=\textbf{(\arabic*)}]
+    \item Execute movement commands and track position
+    \item Track ping pong ball and rotate to face ball
+    \item Predict ball landing position $X$ and move to point $X$ in a non-time-dependent manner
+    \item Track ball and move so that the ball hits the robot's paddle after one bounce
+    \item Track ball and move to hit the ball back over the net after one bounce
+\end{enumerate}
 
 \section{Parts list}
-% TODO: rough parts list
+\begin{itemize}
+    \item Omnidirectional drive, ideally able to move sufficiently fast (2-3 feet/second)
+    \item Raspberry Pi 3 (or perhaps an Arduino?)
+    \item Pixy CMUcam5 (maybe two for stereo vision)
+    \item Accelerometer and gyroscope
+    \item Light sensor (either C-Cam-2A or photoresistor with bright LEDs)
+\end{itemize}
 
 \end{document}
