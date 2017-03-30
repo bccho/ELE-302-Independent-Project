@@ -2,7 +2,7 @@
     \usepackage[margin=1in]{geometry}
     \usepackage{graphicx, hyperref, booktabs}
     % rubber: set program xelatex
-    \usepackage[stix]{bccho}
+    \usepackage[physics, stix]{bccho}
 
     \setlist[itemize, 2]{label=$\circ$}
     \setlist[enumerate]{itemsep=0pt, topsep=1pt}
@@ -83,11 +83,14 @@
             \item If possible, the omni chassis from last year, or an equivalent one from the same vendor. We may need to gear up the motor if necessary
             \item Four H-bridges (lots of transistors)
         \end{itemize}
-    \item Raspberry Pi 3 (or perhaps an Arduino?)
-    \item Pixy CMUcam5 (maybe two for stereo vision)
-    \item Accelerometer and gyroscope
-    \item Light sensor (either C-Cam-2A or photoresistor with bright LEDs)
-    \item Paddle (any hard, flat surface that a ping pong ball can bounce off)
+    \item Raspberry Pi 3
+    \item $2\times{}$ Pixy CMUcam5 (two for the possibility of stereo vision)
+    \item Accelerometer and gyroscope % TODO: TJ to specify
+    \item Light sensor: photoresistor and bright LEDs % TODO: TJ to specify
+    \item Particle board measuring about $\SI{5}{ft}\times\SI{5}{ft}$ to use as playing surface; if this is too large, it can be broken up into several pieces as long as the joins are even and can be taped together
+    \item Table tennis paddle
+    \item Servo for changing angle of table tennis paddle % TODO: TJ to specify
+    \item Any structural components we will need for the servo % TODO: TJ to specify
 \end{itemize}
 
 \end{document}
