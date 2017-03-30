@@ -1,15 +1,19 @@
 \documentclass[letterpaper, 11pt]{article}
-    \usepackage[margin=0.9in]{geometry}
+    \usepackage[margin=1in]{geometry}
     \usepackage{graphicx, hyperref, booktabs}
     % rubber: set program xelatex
     \usepackage[stix]{bccho}
+
+    \setlist[itemize, 2]{label=$\circ$}
+    \setlist[enumerate]{itemsep=0pt, topsep=1pt}
+    \setlist[enumerate, 1]{label=\textbf{\arabic*.}}
 
 % Begin document
 
 \begin{document}
     \begin{center}
         \large
-        \textsc{\textbf{ELE 302 -- Independent Project Final Proposal}} \vspace{5pt}
+        \textsc{\textbf{ELE 302 -- Independent Project \\ Final Proposal}} \vspace{5pt}
 
         \normalsize
         TJ Smith \hspace{1cm} Byung-Cheol Cho \\
@@ -21,34 +25,50 @@
 
 \section{Overview}
 \begin{itemize}
-    \item \textbf{Objective:} To build a robot/car capable of playing basic ping pong
-    \item \textbf{General principles:}
+    \item \textbf{Aim:} To build a robot/car capable of playing basic ping pong
+    \item \textbf{Objectives:}
         \begin{itemize}
-            \item We will use a camera (or two for stereoscopic vision if necessary) to track a ping pong ball and estimate its trajectory.
-            \item We will then move the robot to the required location (ideally using omni wheels or Mecanum wheels) and hit the ball back over the net.
-            \item We will use a combination of dead reckoning and a grid laid on the floor to determine the position of the robot
+            \item Track a ping pong ball, estimate its trajectory and predict the location where the ball will land
+            \item Determine (1) when it is the robot's turn to hit the ball and (2) when the ball will hit the net or leave the playing area
+            \item Move the robot to the required location before the ball bounces twice and hit the ball back over the net
+            \item Avoid leaving the playing field (area enclosed by table and net)
+        \end{itemize}
+    \item \textbf{Approach:}
+        \begin{itemize}
+            \item We will use a Pixy camera (or two for stereoscopic vision if the size of the ball alone is not accurate enough to determine distance) to track a brightly-colored ping pong ball in 3-D.
+            \item Based on the history of observed ball positions, we will fit a kinematic model and predict the landing location of the ping pong ball. If the ball is moving towards the robot and the predicted landing location is in the playing area, the robot should move to return the ball.
+            \item We will then move the robot to the required location using omni wheels. If we can accurately measure the global position of the ping pong ball while the robot is moving, we can continuously update the expected landing location as the robot moves.
+            \item We will use a combination of dead reckoning and checkerboard pattern or grid laid on the floor measured with a downwards-facing light sensor to determine the position of the robot. This will allow us to avoid leaving the playing field, as well as updating the expected landing position of the ping pong ball.
+            \item If necessary, we will build in a mechanism to change the angle of the paddle so that the ball can be hit to be returned over the net.
         \end{itemize}
 \end{itemize}
 
 \section{Progress steps and checkpoints}
 \subsection*{Hardware}
-\begin{enumerate}[label=\textbf{(\arabic*)}]
-    \item Move around with new drive system (build H-bridges and other relevant circuit boards as necessary)
-    \item Track position of robot with grid and dead reckoning (with accelerometer and gyro)
-    \item Set up interfaces between camera, accelerometer/gyroscope, primary processor (either a Raspberry Pi or an Arduino) and PSoC
-    \item Set up paddle for hitting ping pong ball
+\begin{enumerate}
+    \item Set up new drive system: build H-bridges and other relevant circuit boards as necessary; set up new power supply if a single 7.6~V NiCd battery is insufficient.
+    \item Set up interfaces between camera, accelerometer, gyroscope, light sensor, primary processor (a Raspberry Pi) and PSoC
+    \item Set up ping pong table and grid, and calibrate light sensor to detect grid lines
+    \item Test driving with the omni chassis and determine aberrances in camera images due to vibration
+    \item Set up paddle and turning mechanism for hitting ping pong ball
 \end{enumerate}
 
 \subsection*{Software}
-\begin{enumerate}[label=\textbf{(\arabic*)}]
-    \item Set up feedback control to execute movement commands
-    \item Determine the location of a static ping pong ball based on camera $x$/$y$ coordinates and ball size
-    \item Predict the trajectory of a moving ping pong ball based on camera measurements
-    \item Calculate position to move car to in order to hit ping pong ball
+\begin{enumerate}
+    \item Set up schematics and code on the PSoC to implement feedback control to execute movement commands of the form ``move to position $(x, y)$ in at most $t$ seconds.''
+    \item Set up communications and software interfaces between Raspberry Pi, PSoC, cameras and other sensors.
+    \item Set up Raspberry Pi to send movement commands to the PSoC
+    \item Evaluate accuracy and reliability of dead reckoning; set up grid-based re-calibration as necessary.
+    \item Determine the location of a static ping pong ball based on camera $x$/$y$ coordinates and ball size; evaluate the accuracy of purely size-based depth estimation and the need for a second stereoscopic camera.
+    \item Track and predict the trajectory of a moving ping pong ball based on camera measurements.
+    \item Calculate position to which the robot should move in order to hit ping pong ball.
+    \item Based on ball movement direction and expected landing position, determine whether the robot should move to hit the ball.
+    \item Continuously track position of robot and ball in global 3-D coordinates and update expected landing position of ping pong ball during movement.
+    \item Implement paddle angle calculations as necessary.
 \end{enumerate}
 
 \subsection*{Intermediate goals}
-\begin{enumerate}[label=\textbf{(\arabic*)}]
+\begin{enumerate}
     \item Execute movement commands and track position
     \item Track ping pong ball and rotate to face ball
     \item Predict ball landing position $X$ and move to point $X$ in a non-time-dependent manner
