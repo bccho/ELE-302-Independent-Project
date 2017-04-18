@@ -1,0 +1,2 @@
+/usr/bin/ar qc libpixyusb.a  CMakeFiles/pixyusb.dir/src/chirpreceiver.cpp.o CMakeFiles/pixyusb.dir/src/pixyinterpreter.cpp.o CMakeFiles/pixyusb.dir/src/pixy.cpp.o CMakeFiles/pixyusb.dir/src/usblink.cpp.o CMakeFiles/pixyusb.dir/src/utils/timer.cpp.o CMakeFiles/pixyusb.dir/home/pi/ele302/lib/pixy/src/common/src/chirp.cpp.o
+/usr/bin/ranlib libpixyusb.a

@@ -1,0 +1,55 @@
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_46a40/fast"
+/usr/bin/make -f CMakeFiles/cmTC_46a40.dir/build.make CMakeFiles/cmTC_46a40.dir/build
+make[1]: Entering directory '/home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_46a40.dir/CheckSymbolExists.cxx.o
+/usr/bin/c++      -o CMakeFiles/cmTC_46a40.dir/CheckSymbolExists.cxx.o -c /home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx
+Linking CXX executable cmTC_46a40
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_46a40.dir/link.txt --verbose=1
+/usr/bin/c++        CMakeFiles/cmTC_46a40.dir/CheckSymbolExists.cxx.o  -o cmTC_46a40 -rdynamic 
+CMakeFiles/cmTC_46a40.dir/CheckSymbolExists.cxx.o: In function `main':
+CheckSymbolExists.cxx:(.text+0x38): undefined reference to `pthread_create'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_46a40.dir/build.make:97: recipe for target 'cmTC_46a40' failed
+make[1]: *** [cmTC_46a40] Error 1
+make[1]: Leaving directory '/home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_46a40/fast' failed
+make: *** [cmTC_46a40/fast] Error 2
+
+File /home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_42f90/fast"
+/usr/bin/make -f CMakeFiles/cmTC_42f90.dir/build.make CMakeFiles/cmTC_42f90.dir/build
+make[1]: Entering directory '/home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_42f90.dir/CheckFunctionExists.cxx.o
+/usr/bin/c++     -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_42f90.dir/CheckFunctionExists.cxx.o -c /home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/CheckLibraryExists/CheckFunctionExists.cxx
+Linking CXX executable cmTC_42f90
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_42f90.dir/link.txt --verbose=1
+/usr/bin/c++    -DCHECK_FUNCTION_EXISTS=pthread_create    CMakeFiles/cmTC_42f90.dir/CheckFunctionExists.cxx.o  -o cmTC_42f90 -rdynamic -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_42f90.dir/build.make:97: recipe for target 'cmTC_42f90' failed
+make[1]: *** [cmTC_42f90] Error 1
+make[1]: Leaving directory '/home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/CMakeTmp'
+Makefile:126: recipe for target 'cmTC_42f90/fast' failed
+make: *** [cmTC_42f90/fast] Error 2
+
+

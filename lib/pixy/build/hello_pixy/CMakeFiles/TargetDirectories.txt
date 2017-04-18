@@ -1,0 +1,3 @@
+/home/pi/ele302/lib/pixy/build/hello_pixy/CMakeFiles/edit_cache.dir
+/home/pi/ele302/lib/pixy/build/hello_pixy/CMakeFiles/rebuild_cache.dir
+/home/pi/ele302/lib/pixy/build/hello_pixy/CMakeFiles/hello_pixy.dir

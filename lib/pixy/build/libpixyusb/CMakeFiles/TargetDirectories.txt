@@ -1,0 +1,7 @@
+/home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/edit_cache.dir
+/home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/install/strip.dir
+/home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/rebuild_cache.dir
+/home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/list_install_components.dir
+/home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/install.dir
+/home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/install/local.dir
+/home/pi/ele302/lib/pixy/build/libpixyusb/CMakeFiles/pixyusb.dir
