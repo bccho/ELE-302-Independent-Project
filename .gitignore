@@ -8,3 +8,5 @@
 *.jtag
 *.swp
 *.swo
+
+bin/*
