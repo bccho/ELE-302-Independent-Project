@@ -1,0 +1,11 @@
+#!/bin/bash
+
+TARGET_BUILD_FOLDER=../../bin
+PROJECT_NAME=01_object_detection_test
+
+mkdir $TARGET_BUILD_FOLDER
+mkdir $TARGET_BUILD_FOLDER/$PROJECT_NAME
+
+cd $TARGET_BUILD_FOLDER/$PROJECT_NAME
+cmake ../../src/$PROJECT_NAME
+make
