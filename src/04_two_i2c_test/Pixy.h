@@ -24,7 +24,8 @@
 #define PIXY_H
 
 #include "TPixy.h"
-#include <wiringPiSPI.h>
+#include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
 
 //#define SPI_CHANNEL         0
 #define SPI_SPEED           250000 // Arduino: SPI_CLOCK_DIV16
