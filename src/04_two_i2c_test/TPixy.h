@@ -16,7 +16,6 @@
 #ifndef _TPIXY_H
 #define _TPIXY_H
 
-#include <wiringPi.h>
 #include <stdint.h>
 #include <iostream>
 #include <cstdlib>
@@ -25,8 +24,8 @@
 #define PIXY_INITIAL_ARRAYSIZE      30
 #define PIXY_MAXIMUM_ARRAYSIZE      130
 #define PIXY_START_WORD             0xaa55
+#define PIXY_START_WORD_CC          0xaa56
 #define PIXY_START_WORDX            0x55aa
-#define PIXY_DEFAULT_ADDR           0x54  // I2C
 
 struct Block {
     void print() {
@@ -42,7 +41,7 @@ struct Block {
 
 template <class LinkType> class TPixy {
 public:
-    TPixy(uint8_t addr = PIXY_DEFAULT_ADDR, int channel = 0);
+    TPixy(uint8_t addr);
     ~TPixy();
 
     uint16_t getBlocks(uint16_t maxBlocks = 1000);
@@ -62,18 +61,14 @@ private:
 };
 
 
-template <class LinkType> TPixy<LinkType>::TPixy(uint8_t addr, int channel)
+template <class LinkType> TPixy<LinkType>::TPixy(uint8_t addr)
 {
-    if (channel < 0 || channel > 1) {
-        std::cerr << "Invalid channel. Setting channel = 0" << std::endl;
-        channel = 0;
-    }
     skipStart = false;
     blockCount = 0;
     blockArraySize = PIXY_INITIAL_ARRAYSIZE;
     blocks = (Block *)malloc(sizeof(Block) * blockArraySize);
-    if (link.init(addr, channel) < 0) {
-        std::cerr << "Could not initialize SPI on channel " << channel << std::endl;
+    if (link.init(addr) < 0) {
+        std::cerr << "Could not initialize I2C with address " << addr << std::endl;
     }
 }
 
@@ -92,8 +87,7 @@ template <class LinkType> bool TPixy<LinkType>::getStart()
         w = link.getWord();
 
         if (w == 0 && lastw == 0) {
-            delayMicroseconds(10);
-            return false;
+            return false; // no data: return immediately
         } else if (w == PIXY_START_WORD && lastw == PIXY_START_WORD) {
             return true;
         } else if (w == PIXY_START_WORDX) {
@@ -129,7 +123,7 @@ template <class LinkType> uint16_t TPixy<LinkType>::getBlocks(uint16_t maxBlocks
         skipStart = false;
     }
 
-    for(blockCount = 0; blockCount < maxBlocks && blockCount < PIXY_MAXIMUM_ARRAYSIZE;) {
+    for (blockCount = 0; blockCount < maxBlocks && blockCount < PIXY_MAXIMUM_ARRAYSIZE;) {
         checksum = link.getWord();
 
         if (checksum == PIXY_START_WORD) { // we've reached the beginning of the next frame
@@ -154,7 +148,7 @@ template <class LinkType> uint16_t TPixy<LinkType>::getBlocks(uint16_t maxBlocks
         if (checksum == sum) {
             blockCount++;
         } else {
-            std::cerr << "cs error" << std::endl;
+            std::cerr << "checksum error" << std::endl;
         }
 
         w = link.getWord();
@@ -167,18 +161,6 @@ template <class LinkType> uint16_t TPixy<LinkType>::getBlocks(uint16_t maxBlocks
 
 template <class LinkType> LinkType TPixy<LinkType>::getLink() {
     return link;
-}
-
-template <class LinkType> int8_t TPixy<LinkType>::setServos(uint16_t s0, uint16_t s1)
-{
-    uint8_t outBuf[6];
-
-    outBuf[0] = 0x00;
-    outBuf[1] = 0xff;
-    *(uint16_t *)(outBuf + 2) = s0;
-    *(uint16_t *)(outBuf + 4) = s1;
-
-    return link.send(outBuf, 6);
 }
 
 #endif

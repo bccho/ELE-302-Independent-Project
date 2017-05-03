@@ -24,54 +24,39 @@
 #define PIXY_H
 
 #include "TPixy.h"
-#include <linux/i2c-dev.h>
-#include <sys/ioctl.h>
-
-//#define SPI_CHANNEL         0
-#define SPI_SPEED           250000 // Arduino: SPI_CLOCK_DIV16
+#include <wiringPiI2C.h>
 
 #define PIXY_SYNC_BYTE              0x5a
 #define PIXY_SYNC_BYTE_DATA         0x5b
 #define PIXY_OUTBUF_SIZE            6
 
-class LinkSPI {
+class LinkI2C {
 public:
-    int init(uint8_t addr, int _channel) {
+    int init(uint8_t addr) {
         outLen = 0;
-        channel = _channel;
-        return wiringPiSPISetup(channel, SPI_SPEED);
+        this->addr = addr;
+        fd = wiringPiI2CSetup(addr);
+        return fd;
     }
 
     uint16_t getWord() {
-        // ordering is different because Pixy is sending 16 bits through SPI
-        // instead of 2 bytes in a 16-bit word as with I2C
+        // assume little endian
         uint16_t w;
         uint8_t c, out = 0;
-
-        if (outLen) {
-            w = getByte(PIXY_SYNC_BYTE_DATA);
-            out = outBuf[outIndex++];
-
-            if (outIndex == outLen) {
-                outLen = 0;
-            }
-        } else {
-            w = getByte(PIXY_SYNC_BYTE);
-        }
+        c = getByte();
+        w = getByte();
 
         w <<= 8;
-        c = getByte(out);
         w |= c;
 
         return w;
     }
 
-    uint8_t getByte(uint8_t out=0x00) {
-        uint8_t c = out;
-        wiringPiSPIDataRW(channel, &c, 1);
-        return c;
+    uint8_t getByte() {
+        return wiringPiI2CRead(fd);
     }
 
+    /*
     int8_t send(uint8_t *data, uint8_t len) {
         if (len > PIXY_OUTBUF_SIZE || outLen != 0) {
             return -1;
@@ -80,21 +65,26 @@ public:
         memcpy(outBuf, data, len);
         outLen = len;
         outIndex = 0;
+
+        wiringPiI2CWrite(fd, out);
+
         return len;
     }
+    */
 
-    int getChannel() {
-        return channel;
+    int getAddr() {
+        return addr;
     }
 
 private:
-    int channel;
+    int addr;
+    int fd;
     uint8_t outBuf[PIXY_OUTBUF_SIZE];
     uint8_t outLen;
     uint8_t outIndex;
 };
 
 
-typedef TPixy<LinkSPI> Pixy;
+typedef TPixy<LinkI2C> Pixy;
 
 #endif

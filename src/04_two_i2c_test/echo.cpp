@@ -15,18 +15,13 @@
 
 #include <Pixy.h>
 
-Pixy pixy0(PIXY_DEFAULT_ADDR, 0);
-Pixy pixy1(PIXY_DEFAULT_ADDR, 1);
+Pixy pixy0(0x54);
+Pixy pixy1(0x55);
 
 int main()
 {
     int j;
     uint16_t blocks;
-
-    wiringPiSetupGpio();
-
-    std::cout << "Pixy 0 initialized with channel " << pixy0.getLink().getChannel() << std::endl;
-    std::cout << "Pixy 1 initialized with channel " << pixy1.getLink().getChannel() << std::endl;
 
     while (1) {
         // Pixy 0
