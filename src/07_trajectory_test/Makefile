@@ -1,4 +1,4 @@
-TARGET=stereo
+TARGET=kinematics
 CC=g++
 LIBS=-lwiringPi
 CFLAGS=-I.
