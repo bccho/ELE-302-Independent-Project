@@ -1,13 +1,13 @@
 CC=g++
 LIBS=-lwiringPi
 CFLAGS=-I.
-DEPS = Pixy.h
+DEPS = Pixy.h timer.h
 
 %.o: %.cpp $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-echo: echo.o
-	$(CC) -o echo echo.o $(LIBS)
+stereo: stereo.o
+	$(CC) -o stereo stereo.o $(LIBS)
 
 clean:
-	rm -f *.o echo
+	rm -f *.o stereo
