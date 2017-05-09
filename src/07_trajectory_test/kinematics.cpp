@@ -56,6 +56,7 @@ struct Point3D {
         }
 };
 
+
 // Camera intrinsics
 const double fx = 218.75;
 const double fy = 215; // originally calibrated to 210
@@ -64,6 +65,62 @@ const double cy = 100; // need to recalibrate; cy = 92 when fy = 215
 // Physical parameters
 const double tx = 8.5 * 25.4; // camera horizontal separation
 const double height = 260; // height of camera center from ground
+const double R = 0.4; // coefficient of restitution
+const double g_acc = 9.8; // gravitational field strength
+
+// Trajectory prediction
+arma::vec beta_x(2); // [0] = offset x(0), [1] = vx(0)
+arma::vec beta_y(2); // [0] = offset y(0), [1] = vy(0)
+arma::vec beta_z(3); // [0] = offset z(0), [1] = vz(0), [2] = acceleration g
+
+// Predict time when ball will first bounce
+//   bz: 3-vector, z coefficients for naive kinematic fit
+double predictBounceTime(arma::vec& bz, double z0) {
+    // Solves quadratic equation
+    //   z(t) = z(0) + vz(0) t + 0.5 g t^2 = 0
+    double g = g_acc;
+    return (-1.0 / g) * (bz(1) + std::sqrt(std::pow(bz(1), 2) - 2 * g * z0));
+}
+
+// Predict location of first bounce
+//   bx, by, bz: vectors of length 2, 2, 3 respectively;
+//               coefficients of naive kinematic fit
+//   pt1: position of ball at time 0; point on which bx, by, bz are based
+Point3D predictBounceLocation(arma::vec& bx, arma::vec& by, arma::vec& bz,
+        Point3D& pt1) {
+    double t_bounce = predictBounceTime(bz, pt1.getZ());
+    double newx = pt1.getX() + bx(1) * (t_bounce - pt1.getT());
+    double newy = pt1.getY() + by(1) * (t_bounce - pt1.getT());
+    double newz = pt1.getZ() + bz(1) * (t_bounce - pt1.getT())
+        + bz(2) * std::pow(t_bounce - pt1.getT(), 2);
+
+    return Point3D(newx, newy, newz, t_bounce);
+}
+
+// Predict position of ball at time t, using the bouncing ball model
+// (handles up to one bounce)
+//   bx, by, bz: vectors of length 2, 2, 3 respectively;
+//               coefficients of naive kinematic fit
+//   pt1: position of ball at time 0; point on which bx, by, bz are based
+Point3D predictPosition(arma::vec& bx, arma::vec& by, arma::vec& bz,
+        Point3D& pt1, double t) {
+    double newx = pt1.getX() + bx(1) * (t - pt1.getT());
+    double newy = pt1.getY() + by(1) * (t - pt1.getT());
+    double newz = pt1.getZ() + bz(1) * (t - pt1.getT())
+        + bz(2) * std::pow(t - pt1.getT(), 2);
+
+    if (newz < 0) { // the ball will have bounced
+        // Calculate the time of the first bounce
+        double t_bounce = predictBounceTime(bz, pt1.getZ());
+        // Calculate z velocity at time of bounce
+        double vz = bz(0) + bz(2) * (t_bounce - pt1.getT());
+        // New z velocity after bounce
+        vz = std::sqrt(R) * vz;
+        newz = 0 + vz * (t - t_bounce) + bz(2) * std::pow(t - t_bounce, 2);
+    }
+
+    return Point3D(newx, newy, newz, t);
+}
 
 // Validation
 const double tol = 1;
@@ -81,10 +138,10 @@ int main() {
     Pixy pixy1(addr1);
 
     if (pixy0.getLink().getAddr() == addr0) {
-        // printf("Pixy 0 successfully initialized with I2C address %x.\n", addr0);
+        fprintf(stderr, "Pixy 0 successfully initialized with I2C address %x.\n", addr0);
     }
     if (pixy1.getLink().getAddr() == addr1) {
-        // printf("Pixy 1 successfully initialized with I2C address %x.\n", addr1);
+        fprintf(stderr, "Pixy 1 successfully initialized with I2C address %x.\n", addr1);
     }
 
     // Timing
@@ -116,7 +173,7 @@ int main() {
                 ind0 = i;
                 break;
             } else {
-                // printf("[!] Discarded object %d from cam 0 because of dimensions\n", i);
+                fprintf(stderr, "[!] Discarded object %d from cam 0 because of dimensions\n", i);
             }
         }
         for (int i = 0; i < nBlocks1; i++) {
@@ -126,7 +183,7 @@ int main() {
                 ind1 = i;
                 break;
             } else {
-                // printf("[!] Discarded object %d from cam 1 because of dimensions\n", i);
+                fprintf(stderr, "[!] Discarded object %d from cam 1 because of dimensions\n", i);
             }
         }
         if (ind0 < 0 || ind1 < 0) continue;
@@ -156,7 +213,7 @@ int main() {
         }
 
         // Validate
-        if (x_diff < 0) { // detected wrong objects
+        if (x_diff < 0) { // x_diff makes no sense
             numMisses++;
             continue;
         }
@@ -165,18 +222,31 @@ int main() {
             continue;
         }
         if (points.size() > 0) {
-            // Max change in position
-            if ((ptNow - points.back()).maxAbsSpatial() > MAX_POS_DIFF) {
+            // Max change in position from expected next position
+            Point3D ptFirst = points.front();
+            double t_first = ptFirst.getT();
+            Point3D ptExp = predictPosition(beta_x, beta_y, beta_z, ptFirst, t_elapsed);
+            printf("%.3f, %.1f, %.1f, %.1f",
+                    ptNow.getT(), ptExp.getX(), ptExp.getY(), ptExp.getZ());
+            if ((ptNow - ptExp).maxAbsSpatial() > MAX_POS_DIFF) {
                 numMisses++;
-                continue; 
+                //printf("\n");
+                //continue;
             }
+        } else {
+            printf("%.3f,,,", ptNow.getT());
         }
+        numMisses = 0;
 
         // Add to points[]
         points.push_back(ptNow);
         if (points.size() > 100) { // keep maximum size at 100
             points.pop_front();
         }
+
+        // Print new point data
+        printf(", %.1f, %.1f, %.1f, %d",
+                ptNow.getX(), ptNow.getY(), ptNow.getZ(), points.size());
 
         /* Predict trajectory */
         // Populate predictor matrices and response vectors
@@ -199,21 +269,34 @@ int main() {
             res_z(i) = points[i].getZ();
         }
 
-        if (points.size() <= 2) continue; // not enough points for regression
+        if (points.size() <= 2) { // not enough points for regression
+            printf("\n");
+            continue;
+        }
 
         // Perform regression
-        arma::vec beta_x = (t.t() * t).i() * t.t() * res_x;
-        arma::vec beta_y = (t.t() * t).i() * t.t() * res_y;
-        arma::vec beta_z = (t2.t() * t2).i() * t2.t() * res_z;
+        beta_x = (t.t() * t).i() * t.t() * res_x;
+        beta_y = (t.t() * t).i() * t.t() * res_y;
+        beta_z = (t2.t() * t2).i() * t2.t() * res_z;
+        double acc = beta_z(2) * 2 / 1000;
 
         // Validate results
-        // if (beta_z(2)
+        if (acc > -3.0) {
+            // flush points[]
+            points.clear();
+            // add back current point
+            points.push_back(ptNow);
+            numMisses = 0;
+        }
 
-        /* Timing */
-        // Print
-        printf("%.3f, %.1f, %.1f, %.1f, %.3f (%d) g = %.3f\n",
-                ptNow.getT(), ptNow.getX(), ptNow.getY(), ptNow.getZ(),
-                timer_elapsed(&t1), points.size(), beta_z(2) * 2 / 1000);
+        // Print regression results
+        printf(", %.3f, %.3f",
+                timer_elapsed(&t1), acc);
+
+        // Predict bounce location
+        Point3D ptBounce = predictBounceLocation(beta_x, beta_y, beta_z, points.front());
+        printf(", %.1f, %.1f, %.1f, %.3f\n",
+                ptBounce.getX(), ptBounce.getY(), ptBounce.getZ(), ptBounce.getT());
     }
 
     return 0;

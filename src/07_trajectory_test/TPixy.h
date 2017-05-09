@@ -91,7 +91,7 @@ template <class LinkType> bool TPixy<LinkType>::getStart()
         } else if (w == PIXY_START_WORD && lastw == PIXY_START_WORD) {
             return true;
         } else if (w == PIXY_START_WORDX) {
-            std::cerr << "reorder" << std::endl;
+            std::cerr << "Out of sync" << std::endl;
             link.getByte(); // resync
         }
 
@@ -148,7 +148,7 @@ template <class LinkType> uint16_t TPixy<LinkType>::getBlocks(uint16_t maxBlocks
         if (checksum == sum) {
             blockCount++;
         } else {
-            std::cerr << "checksum error" << std::endl;
+            std::cerr << "Checksum error" << std::endl;
         }
 
         w = link.getWord();
