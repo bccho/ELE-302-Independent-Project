@@ -94,6 +94,7 @@ int main() {
         // Print
         std::string zs(std::min((int) (z_world / 20), 200), ' ');
         printf("x: %5.1f, y: %5.1f, z: %8.1f (%4.1f fps) %so\n", x_world, y_world, z_world, fps, zs.c_str());
+        // printf("%5.1f, %5.1f, %8.1f\n", x_world, y_world, z_world);
     }
 
     return 0;
