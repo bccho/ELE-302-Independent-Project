@@ -236,7 +236,7 @@ int main() {
             Point3D ptFirst = points.front();
             double t_first = ptFirst.getT();
             Point3D ptExp = predictPosition(beta_x, beta_y, beta_z, ptFirst, t_elapsed);
-            printf("%.3f, %.3f, %.3f",
+            printf(", %.3f, %.3f, %.3f",
                     ptExp.getX(), ptExp.getY(), ptExp.getZ());
             if ((ptNow - ptExp).maxAbsSpatial() > MAX_POS_DIFF) {
                 numMisses++;
