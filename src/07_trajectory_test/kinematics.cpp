@@ -240,11 +240,11 @@ int main() {
                     ptExp.getX(), ptExp.getY(), ptExp.getZ(), numMisses);
             if ((ptNow - ptExp).maxAbsSpatial() > MAX_POS_DIFF) {
                 numMisses++;
-                printf(", %d\n", numMisses);
-                continue;
+                //printf("\n");
+                //continue;
             }
         } else {
-            printf(",,,");
+            printf(",,,, %d", numMisses);
         }
 
         // Add to points[]
@@ -291,12 +291,14 @@ int main() {
         beta_z = (t2.t() * t2).i() * t2.t() * res_z;
         double acc = beta_z(2) * 2 / 1000;
 
+        printf(", %.3f, %.3f, %.3f", beta_z(0), beta_z(1), beta_z(2));
+
         // Validate results
-        if (acc > -3.0) {
-            // Flush points[]
-            points.clear();
-            numMisses++;
-        }
+        /* if (acc > -3.0) { */
+        /*     // Flush points[] */
+        /*     points.clear(); */
+        /*     numMisses++; */
+        /* } */
 
         // Predict bounce location
         Point3D ptBounce = predictBounceLocation(beta_x, beta_y, beta_z, points.front());
