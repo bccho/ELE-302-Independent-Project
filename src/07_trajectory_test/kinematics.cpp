@@ -66,7 +66,7 @@ const double cy = 100; // need to recalibrate; cy = 92 when fy = 215
 const double tx = 8.5 * 25.4; // camera horizontal separation
 const double height = 260; // height of camera center from ground
 const double R = 0.4; // coefficient of restitution
-const double g_acc = 9.8; // gravitational field strength
+const double g_acc = -9.8; // gravitational field strength
 
 // Trajectory prediction
 arma::vec beta_x(2); // [0] = offset x(0), [1] = vx(0)
@@ -78,7 +78,7 @@ arma::vec beta_z(3); // [0] = offset z(0), [1] = vz(0), [2] = acceleration g
 double predictBounceTime(arma::vec& bz, double z0) {
     // Solves quadratic equation
     //   z(t) = z(0) + vz(0) t + 0.5 g t^2 = 0
-    double g = g_acc;
+    double g = bz(2) * 2; // g_acc * 1000;
     return (-1.0 / g) * (bz(1) + std::sqrt(std::pow(bz(1), 2) - 2 * g * z0));
 }
 
@@ -104,19 +104,21 @@ Point3D predictBounceLocation(arma::vec& bx, arma::vec& by, arma::vec& bz,
 //   pt1: position of ball at time 0; point on which bx, by, bz are based
 Point3D predictPosition(arma::vec& bx, arma::vec& by, arma::vec& bz,
         Point3D& pt1, double t) {
+    double g = bz(2) * 2; // g_acc * 1000; // bz(2) * 2
     double newx = pt1.getX() + bx(1) * (t - pt1.getT());
     double newy = pt1.getY() + by(1) * (t - pt1.getT());
     double newz = pt1.getZ() + bz(1) * (t - pt1.getT())
-        + bz(2) * std::pow(t - pt1.getT(), 2);
+        + 0.5 * g * std::pow(t - pt1.getT(), 2);
 
     if (newz < 0) { // the ball will have bounced
         // Calculate the time of the first bounce
-        double t_bounce = predictBounceTime(bz, pt1.getZ());
+        double t_bounce = predictBounceTime(bz, pt1.getZ()) + pt1.getT();
+        // fprintf(stderr, "bounce at %.3f\n", t_bounce);
         // Calculate z velocity at time of bounce
-        double vz = bz(0) + bz(2) * (t_bounce - pt1.getT());
+        double vz = bz(1) + g * (t_bounce - pt1.getT());
         // New z velocity after bounce
-        vz = std::sqrt(R) * vz;
-        newz = 0 + vz * (t - t_bounce) + bz(2) * std::pow(t - t_bounce, 2);
+        vz = -std::sqrt(R) * vz;
+        newz = 0 + vz * (t - t_bounce) + 0.5 * g * std::pow(t - t_bounce, 2);
     }
 
     return Point3D(newx, newy, newz, t);
@@ -152,20 +154,23 @@ int main() {
     std::deque<Point3D> points;
 
     while (true) {
-        /* Timing */
-        timer_obj t1;
-        timer_start(&t1);
-
-        /* Detect ball in 3D */
+        /* Get data from cameras */
         // Wait until blocks detected on both cameras
         int nBlocks0 = 0;
         int nBlocks1 = 0;
         while (!nBlocks0) { nBlocks0 = pixy0.getBlocks(); }
         while (!nBlocks1) { nBlocks1 = pixy1.getBlocks(); }
 
+        /* Timing */
+        timer_obj t1;
+        timer_start(&t1);
+
+        /* Detect ball in 3D */
         // Filter roughly round objects
-        int ind0 = -1;
-        int ind1 = -1;
+        int ind0 = 0;
+        int ind1 = 0;
+        // while (ind0 < nBlocks0 && ind1 < nBlocks1) {
+        // }
         for (int i = 0; i < nBlocks0; i++) {
             int w = pixy0.blocks[i].width;
             int h = pixy0.blocks[i].height;
@@ -173,7 +178,7 @@ int main() {
                 ind0 = i;
                 break;
             } else {
-                fprintf(stderr, "[!] Discarded object %d from cam 0 because of dimensions\n", i);
+                // fprintf(stderr, "[!] Discarded object %d from cam 0 because of dimensions\n", i);
             }
         }
         for (int i = 0; i < nBlocks1; i++) {
@@ -183,7 +188,7 @@ int main() {
                 ind1 = i;
                 break;
             } else {
-                fprintf(stderr, "[!] Discarded object %d from cam 1 because of dimensions\n", i);
+                // fprintf(stderr, "[!] Discarded object %d from cam 1 because of dimensions\n", i);
             }
         }
         if (ind0 < 0 || ind1 < 0) continue;
@@ -206,9 +211,12 @@ int main() {
         // Prepare current position in car coordinates (x, y are horizontal plane)
         Point3D ptNow = Point3D(x_world, z_world, y_world, t_elapsed);
 
-        // Flush points[] if too many misses
+        // Flush points[] and reset regression results if too many misses
         if (numMisses > MAX_MISSES) {
             points.clear();
+            beta_x.fill(0);
+            beta_y.fill(0);
+            beta_z.fill(0);
             numMisses = 0;
         }
 
@@ -221,22 +229,23 @@ int main() {
             numMisses++;
             continue;
         }
+        printf("%.3f", ptNow.getT());
+        printf(", %.3f, %.3f, %.3f", beta_z(0), beta_z(1), beta_z(2));
         if (points.size() > 0) {
             // Max change in position from expected next position
             Point3D ptFirst = points.front();
             double t_first = ptFirst.getT();
             Point3D ptExp = predictPosition(beta_x, beta_y, beta_z, ptFirst, t_elapsed);
-            printf("%.3f, %.1f, %.1f, %.1f",
-                    ptNow.getT(), ptExp.getX(), ptExp.getY(), ptExp.getZ());
+            printf("%.3f, %.3f, %.3f",
+                    ptExp.getX(), ptExp.getY(), ptExp.getZ());
             if ((ptNow - ptExp).maxAbsSpatial() > MAX_POS_DIFF) {
                 numMisses++;
-                //printf("\n");
-                //continue;
+                printf("\n");
+                continue;
             }
         } else {
-            printf("%.3f,,,", ptNow.getT());
+            printf(",,,");
         }
-        numMisses = 0;
 
         // Add to points[]
         points.push_back(ptNow);
@@ -245,33 +254,35 @@ int main() {
         }
 
         // Print new point data
-        printf(", %.1f, %.1f, %.1f, %d",
-                ptNow.getX(), ptNow.getY(), ptNow.getZ(), points.size());
+        printf(", %.3f, %.3f, %.3f, %d, %d",
+                ptNow.getX(), ptNow.getY(), ptNow.getZ(), numMisses, points.size());
+        numMisses = 0;
 
         /* Predict trajectory */
+        if (points.size() <= 2) { // not enough points for regression
+            printf("\n");
+            continue;
+        }
+        int regNum = std::min(10, (int) points.size());
         // Populate predictor matrices and response vectors
-        arma::mat t(points.size(), 2); // for global x, y
-        arma::mat t2(points.size(), 3); // for global z
-        arma::vec res_x(points.size()); // global x
-        arma::vec res_y(points.size()); // global y
-        arma::vec res_z(points.size()); // global z
-        for (int i = 0; i < points.size(); i++) {
+        arma::mat t(regNum, 2); // for global x, y
+        arma::mat t2(regNum, 3); // for global z
+        arma::vec res_x(regNum); // global x
+        arma::vec res_y(regNum); // global y
+        arma::vec res_z(regNum); // global z
+        for (int i = 0; i < regNum; i++) {
+            int ind = points.size() - regNum + i;
             // Populate predictor matrices
             t(i, 0) = 1; // constant for bias/offset
             t2(i, 0) = 1;
-            t(i, 1) = points[i].getT() - points.front().getT(); // t (linear term)
+            t(i, 1) = points[ind].getT() - points.front().getT(); // t (linear term)
             t2(i, 1) = t(i, 1);
             t2(i, 2) = std::pow(t2(i, 1), 2); // t^2 (quadratic term)
 
             // Populator response vectors
-            res_x(i) = points[i].getX();
-            res_y(i) = points[i].getY();
-            res_z(i) = points[i].getZ();
-        }
-
-        if (points.size() <= 2) { // not enough points for regression
-            printf("\n");
-            continue;
+            res_x(i) = points[ind].getX();
+            res_y(i) = points[ind].getY();
+            res_z(i) = points[ind].getZ();
         }
 
         // Perform regression
@@ -282,21 +293,16 @@ int main() {
 
         // Validate results
         if (acc > -3.0) {
-            // flush points[]
+            // Flush points[]
             points.clear();
-            // add back current point
-            points.push_back(ptNow);
-            numMisses = 0;
+            numMisses++;
         }
-
-        // Print regression results
-        printf(", %.3f, %.3f",
-                timer_elapsed(&t1), acc);
 
         // Predict bounce location
         Point3D ptBounce = predictBounceLocation(beta_x, beta_y, beta_z, points.front());
-        printf(", %.1f, %.1f, %.1f, %.3f\n",
-                ptBounce.getX(), ptBounce.getY(), ptBounce.getZ(), ptBounce.getT());
+//        printf(", %.3f, %.3f, %.3f, %.3f\n",
+//                ptBounce.getX(), ptBounce.getY(), ptBounce.getZ(), ptBounce.getT());
+        printf(", %.5f\n", timer_elapsed(&t1));
     }
 
     return 0;
