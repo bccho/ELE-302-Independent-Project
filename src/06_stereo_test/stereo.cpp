@@ -5,9 +5,9 @@
 
 // Camera intrinsics
 const double fx = 218.75;
-const double fy = 210;
+const double fy = 215; // 210;
 const double cx = 160;
-const double cy = 92;
+const double cy = 100; // 92;
 // Physical parameters
 const double tx = 8.5 * 25.4; // camera horizontal separation
 const double height = 260; // height of camera center from ground
