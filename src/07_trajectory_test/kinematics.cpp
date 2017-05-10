@@ -236,11 +236,11 @@ int main() {
             Point3D ptFirst = points.front();
             double t_first = ptFirst.getT();
             Point3D ptExp = predictPosition(beta_x, beta_y, beta_z, ptFirst, t_elapsed);
-            printf(", %.3f, %.3f, %.3f",
-                    ptExp.getX(), ptExp.getY(), ptExp.getZ());
+            printf(", %.3f, %.3f, %.3f, %d",
+                    ptExp.getX(), ptExp.getY(), ptExp.getZ(), numMisses);
             if ((ptNow - ptExp).maxAbsSpatial() > MAX_POS_DIFF) {
                 numMisses++;
-                printf("\n");
+                printf(", %d\n", numMisses);
                 continue;
             }
         } else {
@@ -254,8 +254,8 @@ int main() {
         }
 
         // Print new point data
-        printf(", %.3f, %.3f, %.3f, %d, %d",
-                ptNow.getX(), ptNow.getY(), ptNow.getZ(), numMisses, points.size());
+        printf(", %.3f, %.3f, %.3f, %d",
+                ptNow.getX(), ptNow.getY(), ptNow.getZ(), points.size());
         numMisses = 0;
 
         /* Predict trajectory */
