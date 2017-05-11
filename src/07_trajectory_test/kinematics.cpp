@@ -72,7 +72,7 @@ const double cy = 100; // need to recalibrate; cy = 92 when fy = 215
 const double CAM_HOR_SEP = 8.5 * 25.4; // camera horizontal separation
 const double CAM_HEIGHT = 260; // height of camera center from ground
 const double BALL_DIAM = 1.5 * 25.4; // diameter of ball
-const double COEF_REST = 0.6;
+const double COEF_REST = 0.3;
 // coefficient of restitution
 const double G_ACC = -9.8; // gravitational field strength
 
@@ -115,10 +115,14 @@ double predictBounceTime(arma::vec& bz, double z0) {
 Point3D predictBounceLocation(arma::vec& bx, arma::vec& by, arma::vec& bz,
         Point3D& pt1) {
     double t_bounce = predictBounceTime(bz, pt1.getZ());
-    double newx = pt1.getX() + bx(1) * (t_bounce - pt1.getT());
-    double newy = pt1.getY() + by(1) * (t_bounce - pt1.getT());
-    double newz = pt1.getZ() + bz(1) * (t_bounce - pt1.getT())
-        + bz(2) * std::pow(t_bounce - pt1.getT(), 2);
+    double newx = pt1.getX() + bx(1) * t_bounce;
+    double newy = pt1.getY() + by(1) * t_bounce;
+    double newz = pt1.getZ() + bz(1) * t_bounce
+        + bz(2) * std::pow(t_bounce, 2);
+    /* double newx = pt1.getX() + bx(1) * (t_bounce - pt1.getT()); */
+    /* double newy = pt1.getY() + by(1) * (t_bounce - pt1.getT()); */
+    /* double newz = pt1.getZ() + bz(1) * (t_bounce - pt1.getT()) */
+    /*     + bz(2) * std::pow(t_bounce - pt1.getT(), 2); */
 
     return Point3D(newx, newy, newz, t_bounce);
 }
@@ -428,11 +432,10 @@ int main(int argc, char *argv[]) {
             }
 
             // Predict bounce location
-            /* Point3D ptBounce = predictBounceLocation(beta_x, beta_y, beta_z, points.front()); */
+            Point3D ptBounce = predictBounceLocation(beta_x, beta_y, beta_z, points.front());
 
             /* Print all info */
-/* printData: */
-            if (verbose > 0) {
+            if (verbose > 1) {
                 printf("%10.3f", ptNow.getT());
                 printf(", %10.3f, %10.3f, %10.3f, %10.3f", beta_z(0), beta_z(1), beta_z(2), beta_R);
                 printf(", %10.3f, %10.3f, %10.3f, %2d",
@@ -444,6 +447,9 @@ int main(int argc, char *argv[]) {
                 /*         ptBounce.getX(), ptBounce.getY(), ptBounce.getZ(), ptBounce.getT()); */
                 printf(", %7.5f\n", timer_elapsed(&t1));
             }
+            printf("%10.3f, %10.3f, %10.3f, %10.3f\n",
+                    ptBounce.getT() - ptNow.getT() + points.front().getT(),
+                    ptBounce.getX(), ptBounce.getY(), ptBounce.getZ());
 
             /* Break so that it examines no further plausible pairs and examines next frame */
             break;

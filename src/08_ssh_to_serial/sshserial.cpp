@@ -11,13 +11,33 @@ int main() {
     else         { cout << "Failed to open serial!" << endl; return -1; }
 
     /* Receive input, display output */
-    string input;
-    while (getline(cin, input)) {
-        // Write input to Tx
-        serialPuts(fd, string.c_str());
+    string data;
+    while (true) {
+        while (serialDataAvail(fd)) {
+            /* Receive */
+            // get char
+            char recByte = serialGetchar(fd);
+            // if NL, CR, or EOT, indicate end of message, print special char, and
+            // print message in received buffer
+            if (recByte == 0xA || recByte == 0xD || recByte == 0x4) {
+                cout << "$" << recByte;
+                cout << data << endl;
+                data = "";
+            } else if (recByte > 0) {
+                // put byte in buffer and echo the byte
+                data += recByte;
+                cout << recByte;
+            // byte should never be zero, so print error char if it is
+            } else {
+                cout << "!";
+            }
+        }
 
-        // Receive from Rx
-        char recByte = serialGetchar(fd);
+        /* Listen to input and transmit */
+        string input;
+        if (cin >> input) {
+            serialPuts(fd, (input + "\n").c_str());
+        }
     }
 
     return 0;
