@@ -20,13 +20,12 @@ int main() {
             // if NL, CR, or EOT, indicate end of message, print special char, and
             // print message in received buffer
             if (recByte == 0xA || recByte == 0xD || recByte == 0x4) {
-                cout << "$" << recByte;
-                cout << data << endl;
+                cout << recByte;
+                cout << data;
                 data = "";
             } else if (recByte > 0) {
                 // put byte in buffer and echo the byte
                 data += recByte;
-                cout << recByte;
             // byte should never be zero, so print error char if it is
             } else {
                 cout << "!";
