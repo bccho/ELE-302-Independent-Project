@@ -89,6 +89,8 @@ const double MAX_POS_DIFF = 50; // mm
 const int MAX_MISSES = 3;
 
 /* Global variables */
+// General execution
+int verbose = 0; // higher values = more verbose
 // Estimates of x/y/z kinematic parameters
 arma::vec beta_x(2); // [0] = offset x(0), [1] = vx(0)
 arma::vec beta_y(2); // [0] = offset y(0), [1] = vy(0)
@@ -137,7 +139,6 @@ Point3D predictPosition(arma::vec& bx, arma::vec& by, arma::vec& bz, double bR,
     if (newz < 0) { // the ball will have bounced
         // Calculate the time of the first bounce
         double t_bounce = predictBounceTime(bz, pt1.getZ()) + pt1.getT();
-        // fprintf(stderr, "bounce at %10.3f\n", t_bounce);
         // Calculate z velocity at time of bounce
         double vz = bz(1) + g * (t_bounce - pt1.getT());
         // New z velocity after bounce
@@ -149,16 +150,21 @@ Point3D predictPosition(arma::vec& bx, arma::vec& by, arma::vec& bz, double bR,
 }
 
 /* Main method */
-int main() {
+int main(int argc, char *argv[]) {
+    verbose = 0;
+    if (argc > 0) {
+        verbose = atoi(argv[0]);
+    }
+
     // Connect cameras
     Pixy pixy0(ADDR0);
     Pixy pixy1(ADDR1);
 
-    if (pixy0.getLink().getAddr() == ADDR0) {
-        fprintf(stderr, "Pixy 0 successfully initialized with I2C address %x.\n", ADDR0);
+    if (pixy0.getLink().getAddr() != ADDR0 && verbose > 0) {
+        fprintf(stderr, "Pixy 0 failed to initialize with I2C address %x.\n", ADDR0);
     }
-    if (pixy1.getLink().getAddr() == ADDR1) {
-        fprintf(stderr, "Pixy 1 successfully initialized with I2C address %x.\n", ADDR1);
+    if (pixy1.getLink().getAddr() != ADDR1 && verbose > 0) {
+        fprintf(stderr, "Pixy 1 failed to initialize with I2C address %x.\n", ADDR1);
     }
 
     // Timing
@@ -285,7 +291,6 @@ int main() {
 
             /* Predict trajectory */
             if (points.size() > 2) { // ensure enough points for regression
-                int regNum = points.size(); // std::min(NUM_REGRESSION_POINTS, (int) points.size());
                 arma::vec best_beta_x;
                 arma::vec best_beta_y;
                 arma::vec best_beta_z;
@@ -296,24 +301,23 @@ int main() {
                 // Regress using current coefficient of restitution
                 double new_beta_R = beta_R;
                 /* Populate predictor matrices and response vectors */
-                arma::mat t(regNum, 2); // for global x, y
-                arma::mat t2(regNum, 3); // for global z
-                arma::vec res_x(regNum); // global x
-                arma::vec res_y(regNum); // global y
-                arma::vec res_z(regNum); // global z
-                for (int i = 0; i < regNum; i++) {
-                    int ind = points.size() - regNum + i;
+                arma::mat t(points.size(), 2); // for global x, y
+                arma::mat t2(points.size(), 3); // for global z
+                arma::vec res_x(points.size()); // global x
+                arma::vec res_y(points.size()); // global y
+                arma::vec res_z(points.size()); // global z
+                for (int i = 0; i < points.size(); i++) {
                     // Populate predictor matrices
                     t(i, 0) = 1; // constant for bias/offset
                     t2(i, 0) = 1;
-                    t(i, 1) = points[ind].getT() - points.front().getT(); // t (linear term)
+                    t(i, 1) = points[i].getT() - points.front().getT(); // t (linear term)
                     t2(i, 1) = t(i, 1);
                     t2(i, 2) = std::pow(t2(i, 1), 2); // t^2 (quadratic term)
 
                     // Populate response vectors
-                    res_x(i) = points[ind].getX();
-                    res_y(i) = points[ind].getY();
-                    res_z(i) = points[ind].getZ();
+                    res_x(i) = points[i].getX();
+                    res_y(i) = points[i].getY();
+                    res_z(i) = points[i].getZ();
 
                     // Has it bounced?
                     if (t(i, 1) > t_bounce) { // If so...
@@ -343,26 +347,27 @@ int main() {
                         double new_beta_R = MIN_COEF_REST
                             + (MAX_COEF_REST - MIN_COEF_REST) * i / (NUM_COEF_REST_POINTS - 1);
                         /* Populate predictor matrices and response vectors */
-                        for (int i = 0; i < regNum; i++) {
-                            int ind = points.size() - regNum + i;
+                        for (int i = 0; i < points.size(); i++) {
                             // Populate predictor matrices
                             t(i, 0) = 1; // constant for bias/offset
                             t2(i, 0) = 1;
-                            t(i, 1) = points[ind].getT() - points.front().getT(); // t (linear term)
+                            t(i, 1) = points[i].getT() - points.front().getT(); // t (linear term)
                             t2(i, 1) = t(i, 1);
                             t2(i, 2) = std::pow(t2(i, 1), 2); // t^2 (quadratic term)
 
                             // Populate response vectors
-                            res_x(i) = points[ind].getX();
-                            res_y(i) = points[ind].getY();
-                            res_z(i) = points[ind].getZ();
+                            res_x(i) = points[i].getX();
+                            res_y(i) = points[i].getY();
+                            res_z(i) = points[i].getZ();
 
                             // Has it bounced?
                             if (t(i, 1) > t_bounce) { // If so...
                                 // Transform z, t to lie on the original parabola
                                 double tnew = t_bounce - (t(i, 1) - t_bounce) / std::sqrt(new_beta_R);
                                 double znew = res_z(i) / new_beta_R;
-                                /* printf(", %10.3f, %10.3f, %10.3f\n", t_bounce, tnew, znew); */
+                                if (verbose > 2) {
+                                    printf(", %10.3f, %10.3f, %10.3f\n", t_bounce, tnew, znew);
+                                }
                                 t2(i, 1) = tnew;
                                 t2(i, 2) = std::pow(tnew, 2);
                                 res_z(i) = znew;
@@ -380,7 +385,9 @@ int main() {
                         /* Calculate MSE for z coordinate and select best MSE */
                         arma::vec est_z = t2 * new_beta_z;
                         double mse_z = std::pow(arma::norm(res_z - est_z), 2) / res_z.n_elem;
-                        printf(", %.3f, %.3f\n", new_beta_R, mse_z);
+                        if (verbose > 2) {
+                            printf(", %.3f, %.3f\n", new_beta_R, mse_z);
+                        }
                         if (mse_z < best_mse) {
                             best_mse = mse_z;
                             best_beta_x = new_beta_x;
@@ -400,10 +407,14 @@ int main() {
                 double acc = best_beta_z(2) * 2 / 1000;
                 if (acc > -3.0) {
                     // Reset regression variables
-                    best_beta_x.fill(0);
-                    best_beta_y.fill(0);
-                    best_beta_z.fill(0);
-                    best_beta_R = COEF_REST;
+                    /* best_beta_x.fill(0); */
+                    /* best_beta_y.fill(0); */
+                    /* best_beta_z.fill(0); */
+                    /* best_beta_R = COEF_REST; */
+                    best_beta_x = beta_x;
+                    best_beta_y = beta_y;
+                    best_beta_z = beta_z;
+                    best_beta_R = beta_R;
                     // Flush points[]
                     points.clear();
                     // But don't count this as a miss - we just need to restart our model
@@ -421,16 +432,18 @@ int main() {
 
             /* Print all info */
 /* printData: */
-            printf("%10.3f", ptNow.getT());
-            printf(", %10.3f, %10.3f, %10.3f, %10.3f", beta_z(0), beta_z(1), beta_z(2), beta_R);
-            printf(", %10.3f, %10.3f, %10.3f, %2d",
-                    ptExp.getX(), ptExp.getY(), ptExp.getZ(), numMisses);
-            printf(", %10.3f, %10.3f, %10.3f, %3d",
-                    ptNow.getX(), ptNow.getY(), ptNow.getZ(), points.size());
+            if (verbose > 0) {
+                printf("%10.3f", ptNow.getT());
+                printf(", %10.3f, %10.3f, %10.3f, %10.3f", beta_z(0), beta_z(1), beta_z(2), beta_R);
+                printf(", %10.3f, %10.3f, %10.3f, %2d",
+                        ptExp.getX(), ptExp.getY(), ptExp.getZ(), numMisses);
+                printf(", %10.3f, %10.3f, %10.3f, %3d",
+                        ptNow.getX(), ptNow.getY(), ptNow.getZ(), points.size());
 
-            /* printf(", %10.3f, %10.3f, %10.3f, %10.3f\n", */
-            /*         ptBounce.getX(), ptBounce.getY(), ptBounce.getZ(), ptBounce.getT()); */
-            printf(", %7.5f\n", timer_elapsed(&t1));
+                /* printf(", %10.3f, %10.3f, %10.3f, %10.3f\n", */
+                /*         ptBounce.getX(), ptBounce.getY(), ptBounce.getZ(), ptBounce.getT()); */
+                printf(", %7.5f\n", timer_elapsed(&t1));
+            }
 
             /* Break so that it examines no further plausible pairs and examines next frame */
             break;
