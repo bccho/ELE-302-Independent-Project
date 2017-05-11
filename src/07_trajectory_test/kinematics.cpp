@@ -90,7 +90,6 @@ const int MAX_MISSES = 3;
 arma::vec beta_x(2); // [0] = offset x(0), [1] = vx(0)
 arma::vec beta_y(2); // [0] = offset y(0), [1] = vy(0)
 arma::vec beta_z(3); // [0] = offset z(0), [1] = vz(0), [2] = acceleration g
-double 
 int numMisses = 0;
 
 /* Helper functions */
@@ -306,7 +305,7 @@ int main() {
                     res_z(i) = points[ind].getZ();
 
                     // Has it bounced?
-                    if (t(i, 1) > t_bounce) { // yes
+                    if (t(i, 1) > t_bounce) { // If so...
                         // Transform z, t to lie on the original parabola
                         double tnew = t_bounce - (t(i, 1) - t_bounce);
                         double znew = res_z(i) / COEF_REST;
@@ -333,8 +332,8 @@ int main() {
                     new_beta_x.fill(0);
                     new_beta_y.fill(0);
                     new_beta_z.fill(0);
-                    // Flush points[]
-                    points.clear();
+                    /* // Flush points[] */
+                    /* points.clear(); */
                     // But don't count this as a miss - we just need to restart our model
                 }
 
