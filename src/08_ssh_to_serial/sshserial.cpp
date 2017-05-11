@@ -5,14 +5,17 @@ using namespace std;
 
 int main() {
     /* Open serial connection */
-    int baud = 115200;
+    int baud = 9600;
     int fd = serialOpen("/dev/ttyAMA0", baud);
     if (fd >= 0) { cout << "Serial opened at " << baud << " baud" << endl; }
     else         { cout << "Failed to open serial!" << endl; return -1; }
 
     /* Receive input, display output */
     string data;
-    while (true) {
+    string input;
+    while (getline(cin, input)) {
+        serialPuts(fd, (input + "\n").c_str());
+
         while (serialDataAvail(fd)) {
             /* Receive */
             // get char
@@ -32,11 +35,6 @@ int main() {
             }
         }
 
-        /* Listen to input and transmit */
-        string input;
-        if (cin >> input) {
-            serialPuts(fd, (input + "\n").c_str());
-        }
     }
 
     return 0;
