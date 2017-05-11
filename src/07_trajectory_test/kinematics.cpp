@@ -77,8 +77,10 @@ const double COEF_REST = 0.6;
 const double G_ACC = -9.8; // gravitational field strength
 
 // Trajectory prediction
-const int REG_POINTS_TO_USE = 10;
-const int UPDATE_ITERATIONS = 10;
+const int NUM_REGRESSION_POINTS = 10;
+const int NUM_COEF_REST_POINTS = 20;
+const double MIN_COEF_REST = 0.2;
+const double MAX_COEF_REST = 0.8;
 
 // Validation
 const double SIZE_TOL = 1;
@@ -124,7 +126,7 @@ Point3D predictBounceLocation(arma::vec& bx, arma::vec& by, arma::vec& bz,
 //   bx, by, bz: vectors of length 2, 2, 3 respectively;
 //               coefficients of naive kinematic fit
 //   pt1: position of ball at time 0; point on which bx, by, bz are based
-Point3D predictPosition(arma::vec& bx, arma::vec& by, arma::vec& bz,
+Point3D predictPosition(arma::vec& bx, arma::vec& by, arma::vec& bz, double bR,
         Point3D& pt1, double t) {
     double g = bz(2) * 2; // G_ACC * 1000; // bz(2) * 2
     double newx = pt1.getX() + bx(1) * (t - pt1.getT());
@@ -139,7 +141,7 @@ Point3D predictPosition(arma::vec& bx, arma::vec& by, arma::vec& bz,
         // Calculate z velocity at time of bounce
         double vz = bz(1) + g * (t_bounce - pt1.getT());
         // New z velocity after bounce
-        vz = -std::sqrt(beta_R) * vz;
+        vz = -std::sqrt(bR) * vz;
         newz = 0 + vz * (t - t_bounce) + 0.5 * g * std::pow(t - t_bounce, 2);
     }
 
@@ -264,7 +266,7 @@ int main() {
                 // Max change in position from expected next position
                 Point3D ptFirst = points.front();
                 double t_first = ptFirst.getT();
-                ptExp = predictPosition(beta_x, beta_y, beta_z, ptFirst, t_elapsed);
+                ptExp = predictPosition(beta_x, beta_y, beta_z, beta_R, ptFirst, t_elapsed);
                 // Current ball position is too far from expected position
                 if ((ptNow - ptExp).maxAbsSpatial() > MAX_POS_DIFF) {
                     /* continue; */
@@ -283,86 +285,135 @@ int main() {
 
             /* Predict trajectory */
             if (points.size() > 2) { // ensure enough points for regression
-                int regNum = points.size(); // std::min(REG_POINTS_TO_USE, (int) points.size());
+                int regNum = points.size(); // std::min(NUM_REGRESSION_POINTS, (int) points.size());
+                arma::vec best_beta_x;
+                arma::vec best_beta_y;
+                arma::vec best_beta_z;
+                double best_beta_R = COEF_REST;
+                double best_mse = INFINITY;
                 // Calculate bounce time
                 double t_bounce = predictBounceTime(beta_z, points.front().getZ());
-                // Iteratively update kinematic coefficients, then coefficient of restitution
-                arma::vec new_beta_x(2);
-                arma::vec new_beta_y(2);
-                arma::vec new_beta_z(3);
+                // Regress using current coefficient of restitution
                 double new_beta_R = beta_R;
-                for (int i = 0; i < UPDATE_ITERATIONS; i++) {
-                    /* Populate predictor matrices and response vectors */
-                    arma::mat t(regNum, 2); // for global x, y
-                    arma::mat t2(regNum, 3); // for global z
-                    arma::vec res_x(regNum); // global x
-                    arma::vec res_y(regNum); // global y
-                    arma::vec res_z(regNum); // global z
-                    for (int i = 0; i < regNum; i++) {
-                        int ind = points.size() - regNum + i;
-                        // Populate predictor matrices
-                        t(i, 0) = 1; // constant for bias/offset
-                        t2(i, 0) = 1;
-                        t(i, 1) = points[ind].getT() - points.front().getT(); // t (linear term)
-                        t2(i, 1) = t(i, 1);
-                        t2(i, 2) = std::pow(t2(i, 1), 2); // t^2 (quadratic term)
+                /* Populate predictor matrices and response vectors */
+                arma::mat t(regNum, 2); // for global x, y
+                arma::mat t2(regNum, 3); // for global z
+                arma::vec res_x(regNum); // global x
+                arma::vec res_y(regNum); // global y
+                arma::vec res_z(regNum); // global z
+                for (int i = 0; i < regNum; i++) {
+                    int ind = points.size() - regNum + i;
+                    // Populate predictor matrices
+                    t(i, 0) = 1; // constant for bias/offset
+                    t2(i, 0) = 1;
+                    t(i, 1) = points[ind].getT() - points.front().getT(); // t (linear term)
+                    t2(i, 1) = t(i, 1);
+                    t2(i, 2) = std::pow(t2(i, 1), 2); // t^2 (quadratic term)
 
-                        // Populate response vectors
-                        res_x(i) = points[ind].getX();
-                        res_y(i) = points[ind].getY();
-                        res_z(i) = points[ind].getZ();
+                    // Populate response vectors
+                    res_x(i) = points[ind].getX();
+                    res_y(i) = points[ind].getY();
+                    res_z(i) = points[ind].getZ();
 
-                        // Has it bounced?
-                        if (t(i, 1) > t_bounce) { // If so...
-                            // Transform z, t to lie on the original parabola
-                            double tnew = t_bounce - (t(i, 1) - t_bounce);
-                            double znew = res_z(i) / beta_R;
-                            /* printf(", %10.3f, %10.3f, %10.3f\n", t_bounce, tnew, znew); */
-                            t2(i, 1) = tnew;
-                            t2(i, 2) = std::pow(tnew, 2);
-                            res_z(i) = znew;
-                            /* res_z(i) = (beta_z(1) + (1-std::sqrt(beta_R))*beta_z(2)*t_bounce) */
-                            /*     * t(i, 1) - res_z(i); */
+                    // Has it bounced?
+                    if (t(i, 1) > t_bounce) { // If so...
+                        // Transform z, t to lie on the original parabola
+                        double tnew = t_bounce - (t(i, 1) - t_bounce) / std::sqrt(new_beta_R);
+                        double znew = res_z(i) / new_beta_R;
+                        /* printf(", %10.3f, %10.3f, %10.3f\n", t_bounce, tnew, znew); */
+                        t2(i, 1) = tnew;
+                        t2(i, 2) = std::pow(tnew, 2);
+                        res_z(i) = znew;
+                        /* res_z(i) = (beta_z(1) + (1-std::sqrt(beta_R))*beta_z(2)*t_bounce) */
+                        /*     * t(i, 1) - res_z(i); */
+                    }
+                }
+
+                /* Perform regression to estimate new kinematic coefficients */
+                arma::vec new_beta_x = (t.t() * t).i() * t.t() * res_x;
+                arma::vec new_beta_y = (t.t() * t).i() * t.t() * res_y;
+                arma::vec new_beta_z = (t2.t() * t2).i() * t2.t() * res_z;
+                /* printf(", %10.3f, %10.3f, %10.3f\n", new_beta_z(0), new_beta_z(1), new_beta_z(2)); */
+
+                // Iterate through potential coefficients of restitution; choose the one with the smallest mean-squared error
+                /* Only do this if we are pretty sure it's bounced */
+                arma::uvec inds_after_bounce = arma::find(t.col(1) > t_bounce);
+                if (inds_after_bounce.n_elem >= 3) {
+                    for (int i = 0; i < NUM_COEF_REST_POINTS; i++) {
+                        double new_beta_R = MIN_COEF_REST
+                            + (MAX_COEF_REST - MIN_COEF_REST) * i / (NUM_COEF_REST_POINTS - 1);
+                        /* Populate predictor matrices and response vectors */
+                        for (int i = 0; i < regNum; i++) {
+                            int ind = points.size() - regNum + i;
+                            // Populate predictor matrices
+                            t(i, 0) = 1; // constant for bias/offset
+                            t2(i, 0) = 1;
+                            t(i, 1) = points[ind].getT() - points.front().getT(); // t (linear term)
+                            t2(i, 1) = t(i, 1);
+                            t2(i, 2) = std::pow(t2(i, 1), 2); // t^2 (quadratic term)
+
+                            // Populate response vectors
+                            res_x(i) = points[ind].getX();
+                            res_y(i) = points[ind].getY();
+                            res_z(i) = points[ind].getZ();
+
+                            // Has it bounced?
+                            if (t(i, 1) > t_bounce) { // If so...
+                                // Transform z, t to lie on the original parabola
+                                double tnew = t_bounce - (t(i, 1) - t_bounce) / std::sqrt(new_beta_R);
+                                double znew = res_z(i) / new_beta_R;
+                                /* printf(", %10.3f, %10.3f, %10.3f\n", t_bounce, tnew, znew); */
+                                t2(i, 1) = tnew;
+                                t2(i, 2) = std::pow(tnew, 2);
+                                res_z(i) = znew;
+                                /* res_z(i) = (beta_z(1) + (1-std::sqrt(beta_R))*beta_z(2)*t_bounce) */
+                                /*     * t(i, 1) - res_z(i); */
+                            }
+                        }
+
+                        /* Perform regression to estimate new kinematic coefficients */
+                        new_beta_x = (t.t() * t).i() * t.t() * res_x;
+                        new_beta_y = (t.t() * t).i() * t.t() * res_y;
+                        new_beta_z = (t2.t() * t2).i() * t2.t() * res_z;
+                        /* printf(", %10.3f, %10.3f, %10.3f\n", new_beta_z(0), new_beta_z(1), new_beta_z(2)); */
+
+                        /* Calculate MSE for z coordinate and select best MSE */
+                        arma::vec est_z = t2 * new_beta_z;
+                        double mse_z = std::pow(arma::norm(res_z - est_z), 2) / res_z.n_elem;
+                        printf(", %.3f, %.3f\n", new_beta_R, mse_z);
+                        if (mse_z < best_mse) {
+                            best_mse = mse_z;
+                            best_beta_x = new_beta_x;
+                            best_beta_y = new_beta_y;
+                            best_beta_z = new_beta_z;
+                            best_beta_R = new_beta_R;
                         }
                     }
-
-                    /* Perform regression to estimate new kinematic coefficients */
-                    new_beta_x = (t.t() * t).i() * t.t() * res_x;
-                    new_beta_y = (t.t() * t).i() * t.t() * res_y;
-                    new_beta_z = (t2.t() * t2).i() * t2.t() * res_z;
-                    /* printf(", %10.3f, %10.3f, %10.3f\n", new_beta_z(0), new_beta_z(1), new_beta_z(2)); */
-
-                    /* Estimate new coefficient of restitution */
-                    arma::uvec inds_after_bounce = arma::find(t.col(1) > t_bounce);
-                    // Skip if a bounce has not yet been firmly detected
-                    if (inds_after_bounce.n_elem < 3) break;
-                    arma::mat t2_after_bounce = t2.rows(inds_after_bounce);
-                    arma::vec z_after_bounce = res_z.elem(inds_after_bounce);
-                    arma::vec z_est = t2_after_bounce * new_beta_z;
-                    new_beta_R = arma::norm(z_after_bounce) / arma::dot(z_est, z_after_bounce);
-                    // Validate and correct new_beta_R
-                    if (new_beta_R < 0) new_beta_R = 0;
-                    if (new_beta_R > 1) new_beta_R = 1;
+                } else {
+                    best_beta_x = new_beta_x;
+                    best_beta_y = new_beta_y;
+                    best_beta_z = new_beta_z;
+                    best_beta_R = new_beta_R;
                 }
 
                 /* Validate results */
-                double acc = new_beta_z(2) * 2 / 1000;
+                double acc = best_beta_z(2) * 2 / 1000;
                 if (acc > -3.0) {
                     // Reset regression variables
-                    new_beta_x.fill(0);
-                    new_beta_y.fill(0);
-                    new_beta_z.fill(0);
-                    beta_R = COEF_REST;
+                    best_beta_x.fill(0);
+                    best_beta_y.fill(0);
+                    best_beta_z.fill(0);
+                    best_beta_R = COEF_REST;
                     // Flush points[]
                     points.clear();
                     // But don't count this as a miss - we just need to restart our model
                 }
 
                 /* Update regression parameters */
-                beta_x = new_beta_x;
-                beta_y = new_beta_y;
-                beta_z = new_beta_z;
-                beta_R = new_beta_R;
+                beta_x = best_beta_x;
+                beta_y = best_beta_y;
+                beta_z = best_beta_z;
+                beta_R = best_beta_R;
             }
 
             // Predict bounce location
