@@ -68,6 +68,8 @@ struct Point3D {
         }
 };
 
+enum ball_state { waiting = 0, falling = 1, bounced = 2 };
+
 /* Constants */
 // I2C
 const uint8_t ADDR0 = 0x54;
@@ -86,17 +88,19 @@ const double PADDLE_X = -230;
 const double PADDLE_Y = -130;
 const double PADDLE_Z = +110;
 const double BALL_DIAM = 1.5 * 25.4; // diameter of ball
-const double COEF_REST = 0.3; // coefficient of restitution
+const double COEF_REST = 0.5; // coefficient of restitution
 const double G_ACC = -9.8; // gravitational field strength
 
 // Trajectory prediction
+const int MIN_REGRESSION_POINTS = 4;
+const int MAX_REGRESSION_POINTS = 100;
 const int NUM_REGRESSION_POINTS = 10;
 const int NUM_COEF_REST_POINTS = 20;
 const double MIN_COEF_REST = 0.2;
 const double MAX_COEF_REST = 0.8;
 
 // Validation
-const double SIZE_TOL = 1;
+const double SIZE_TOL = 2;
 const double Z_MAX = 2000;
 const double MAX_POS_DIFF = 50; // mm
 const int MAX_MISSES = 3;
@@ -110,6 +114,8 @@ arma::vec beta_y(2); // [0] = offset y(0), [1] = vy(0)
 arma::vec beta_z(3); // [0] = offset z(0), [1] = vz(0), [2] = acceleration g
 double beta_R = COEF_REST;
 int numMisses = 0;
+
+ball_state state = waiting;
 
 /* Helper functions */
 // Predict time when ball will first bounce
@@ -201,13 +207,18 @@ Point3D predictLocationGoto(arma::vec& bx, arma::vec& by, arma::vec& bz, double 
     return ptTarget - Point3D(PADDLE_X, PADDLE_Y, 0);
 }
 
-// Populates predictor matrices and response vectors
-void populateRegression(std::deque<Point3D>& points, arma::mat& t, arma::mat& t2,
-        arma::vec& res_x, arma::vec& res_y, arma::vec& res_z,
-        arma::vec& bz, double bR) {
+// Performs regression
+void trajectoryRegression(std::deque<Point3D>& points, arma::vec& bz, double bR,
+        arma::vec& new_beta_x, arma::vec& new_beta_y, arma::vec& new_beta_z, double& new_beta_R) {
     // Calculate bounce time
     double t_bounce = predictBounceTime(bz, points.front().getZ());
 
+    /* Populate predictor matrices and response vectors */
+    arma::mat t(points.size(), 2); // for global x, y
+    arma::mat t2(points.size(), 3); // for global z
+    arma::vec res_x(points.size()); // global x
+    arma::vec res_y(points.size()); // global y
+    arma::vec res_z(points.size()); // global z
     for (int i = 0; i < points.size(); i++) {
         // Populate predictor matrices
         t(i, 0) = 1; // constant for bias/offset
@@ -221,19 +232,20 @@ void populateRegression(std::deque<Point3D>& points, arma::mat& t, arma::mat& t2
         res_y(i) = points[i].getY();
         res_z(i) = points[i].getZ();
 
-        printf("%3d, %10.3f, %10.3f", i, t(i, 1), res_z(i));
-
-        // If point is after first bounce, transform t, z to lie on original parabola
+        // If point is after first bounce, ignore
         if (t(i, 1) > t_bounce) {
-            double tnew = t_bounce - (t(i, 1) - t_bounce) / std::sqrt(bR);
-            double znew = res_z(i) / bR;
-            printf(", %10.3f, %10.3f", tnew, znew);
-            t2(i, 1) = tnew;
-            t2(i, 2) = std::pow(tnew, 2);
-            res_z(i) = znew;
+            t2(i, 1) = 0;
+            t2(i, 2) = 0;
+            res_z(i) = 0;
+            state = bounced;
         }
-        printf("\n");
     }
+
+    /* Perform regression to estimate new kinematic coefficients */
+    new_beta_x = (t.t() * t).i() * t.t() * res_x;
+    new_beta_y = (t.t() * t).i() * t.t() * res_y;
+    new_beta_z = (t2.t() * t2).i() * t2.t() * res_z;
+    new_beta_R = beta_R;
 }
 
 /* Main method */
@@ -329,14 +341,6 @@ int main(int argc, char *argv[]) {
             double y_world = CAM_HEIGHT - (y_avg - cy) * z_world / fy;
 
             // Calculate real width/height
-            /* double distTo0 = std::sqrt(std::pow(x_world + CAM_HOR_SEP/2, 2) + */
-            /*         std::pow(y_world - CAM_HEIGHT, 2) + std::pow(z_world, 2)); */
-            /* double distTo1 = std::sqrt(std::pow(x_world - CAM_HOR_SEP/2, 2) + */
-            /*         std::pow(y_world - CAM_HEIGHT, 2) + std::pow(z_world, 2)); */
-            /* double real_w0 = (pixy0.blocks[ind0].width) * z_world / fx; */
-            /* double real_h0 = (pixy0.blocks[ind0].height) * z_world / fy; */
-            /* double real_w1 = (pixy1.blocks[ind1].width) * z_world / fx; */
-            /* double real_h1 = (pixy1.blocks[ind1].height) * z_world / fy; */
             double real_w = (double) (pixy0.blocks[ind0].width + pixy1.blocks[ind1].width) / 2
                 * z_world / fx;
             double real_h = (double) (pixy0.blocks[ind0].height + pixy1.blocks[ind1].height) / 2
@@ -366,7 +370,8 @@ int main(int argc, char *argv[]) {
 
             /* Validate with trajectory prediction */
             Point3D ptExp;
-            if (points.size() > 1) { // don't check trajectory if there is only one point
+            // don't check trajectory if we don't have a reliable model
+            if (points.size() >= MIN_REGRESSION_POINTS) {
                 // Max change in position from expected next position
                 Point3D ptFirst = points.front();
                 double t_first = ptFirst.getT();
@@ -383,39 +388,42 @@ int main(int argc, char *argv[]) {
 
             // Add to points[]
             points.push_back(ptNow);
-            if (points.size() > 100) { // keep maximum size at 100
+            if (points.size() > MAX_REGRESSION_POINTS) { // maximum size
                 points.pop_front();
             }
 
             /* Linear regression */
-            if (points.size() > 4) { // ensure enough points for regression
-                /* Populate predictor matrices and response vectors */
-                arma::mat t(points.size(), 2); // for global x, y
-                arma::mat t2(points.size(), 3); // for global z
-                arma::vec res_x(points.size()); // global x
-                arma::vec res_y(points.size()); // global y
-                arma::vec res_z(points.size()); // global z
-                populateRegression(points, t, t2, res_x, res_y, res_z, beta_z, beta_R);
-
-                /* Perform regression to estimate new kinematic coefficients */
-                arma::vec new_beta_x = (t.t() * t).i() * t.t() * res_x;
-                arma::vec new_beta_y = (t.t() * t).i() * t.t() * res_y;
-                arma::vec new_beta_z = (t2.t() * t2).i() * t2.t() * res_z;
-                double new_beta_R = beta_R;
-
+            if (state != bounced && points.size() > MIN_REGRESSION_POINTS) {
+                arma::vec new_beta_x(2);
+                arma::vec new_beta_y(2);
+                arma::vec new_beta_z(3);
+                double new_beta_R;
+                trajectoryRegression(points, beta_z, beta_R,
+                        new_beta_x, new_beta_y, new_beta_z, new_beta_R);
                 /* Validate results */
                 double acc = new_beta_z(2) * 2 / 1000;
                 if (acc > -3.0) {
                     // Reset regression variables
-                    new_beta_x.fill(0);
-                    new_beta_y.fill(0);
-                    new_beta_z.fill(0);
+                    new_beta_x.zeros();
+                    new_beta_y.zeros();
+                    new_beta_z.zeros();
                     new_beta_R = COEF_REST;
                     // Flush points[]
                     points.clear();
-                    // Add back current point
                     points.push_back(ptNow);
+
+                    state = waiting;
+
+                    /* // Remove points from points[] */ 
+                    /* while (points.size() > MIN_REGRESSION_POINTS) { */
+                    /*     points.pop_front(); */
+                    /* } */
+                    /* // and re-do regression */
+                    /* trajectoryRegression(points, beta_z, beta_R, */
+                    /*         new_beta_x, new_beta_z, new_beta_z, new_beta_R); */
                     // But don't count this as a miss - we just need to restart our model
+                } else if (state == waiting) {
+                    state = falling;
                 }
 
                 /* Update regression parameters */
@@ -425,21 +433,19 @@ int main(int argc, char *argv[]) {
                 beta_R = new_beta_R;
             }
 
-            /* // Predict bounce location */
-            /* Point3D ptBounce = predictBounceLocation(beta_x, beta_y, beta_z, points.front()); */
+            // Predict bounce location
+            Point3D ptTarget = predictBounceLocation(beta_x, beta_y, beta_z, points.front());
 
-            // Predict location to need to drive to
-            Point3D ptTarget = predictLocationGoto(beta_x, beta_y, beta_z, beta_R,
-                    points.front(), PADDLE_Z);
-
-            break;
+            /* // Predict location to need to drive to */
+            /* Point3D ptTarget = predictLocationGoto(beta_x, beta_y, beta_z, beta_R, */
+            /*         points.front(), PADDLE_Z); */
 
             /* Print all info */
             if (verbose > 1) {
                 printf("%10.3f", ptNow.getT());
                 printf(", %10.3f, %10.3f, %10.3f, %10.3f", beta_z(0), beta_z(1), beta_z(2), beta_R);
                 printf(", %10.3f, %10.3f, %10.3f, %2d",
-                        ptExp.getX(), ptExp.getY(), ptExp.getZ(), numMisses);
+                        ptExp.getX(), ptExp.getY(), ptExp.getZ(), state);
                 printf(", %10.3f, %10.3f, %10.3f, %3d",
                         ptNow.getX(), ptNow.getY(), ptNow.getZ(), points.size());
 
@@ -447,23 +453,29 @@ int main(int argc, char *argv[]) {
             }
             double timeLeft = ptTarget.getT() - ptNow.getT() + points.front().getT();
             if (points.size() > 2) {
-                printf("%10.3f, %10.3f, %10.3f, %10.3f\n",
+                printf(", %10.3f, %10.3f, %10.3f, %10.3f\n",
                         timeLeft, ptTarget.getX(), ptTarget.getY(), ptTarget.getZ());
             }
 
             /* Send instructions to PSoC */
-            if (points.size() > 4 && timeLeft > 0.05) {
+            if (state != waiting && points.size() > 2*MIN_REGRESSION_POINTS && timeLeft > 0.05) {
                 /* serialFlush(psoc_handle); */
-                /* printf("GO(%.3f, %.3f, %.3f, %.3f)\n", */
-                /*         ptBounce.getX() - PADDLE_X, ptBounce.getY() - PADDLE_Y - 100, */
-                /*         timeLeft, 0.6); */
-                /* serialPrintf(psoc_handle, "GO(%.3f, %.3f, %.3f, %.3f)\n\0", */
-                /*         ptBounce.getX() - PADDLE_X, ptBounce.getY() - PADDLE_Y - 100, */
-                /*         timeLeft, 0.6); */
-                printf("GO(%.3f, %.3f, %.3f, %.3f)\n",
-                        ptTarget.getX(), ptTarget.getY(), timeLeft, 0.6);
+                printf(">>> GO(%.3f, %.3f, %.3f, %.3f)\n",
+                        ptTarget.getX() - PADDLE_X, ptTarget.getY() - PADDLE_Y - 100,
+                        timeLeft, 0.6);
                 serialPrintf(psoc_handle, "GO(%.3f, %.3f, %.3f, %.3f)\n\0",
-                        ptTarget.getX(), ptTarget.getY(), timeLeft, 0.6);
+                        ptTarget.getX() - PADDLE_X, ptTarget.getY() - PADDLE_Y - 100,
+                        timeLeft, 0.6);
+                int c;
+                printf("<<< ");
+                while ((c = serialGetchar(psoc_handle)) >= 0) {
+                    printf("%c", (char) c);
+                }
+                printf("\n");
+                /* printf("GO(%.3f, %.3f, %.3f, %.3f)\n", */
+                /*         ptTarget.getX(), ptTarget.getY(), timeLeft, 0.6); */
+                /* serialPrintf(psoc_handle, "GO(%.3f, %.3f, %.3f, %.3f)\n\0", */
+                /*         ptTarget.getX(), ptTarget.getY(), timeLeft, 0.6); */
                 stopped = true;
                 break;
             }
@@ -481,8 +493,16 @@ int main(int argc, char *argv[]) {
             std::string temp;
             while (temp != "y") {
                 // Kill motors
+                printf(">>> GO(0, 0, 0, 0.5)\n\0");
                 serialPrintf(psoc_handle, "GO(0, 0, 0, 0.5)\n\0");
                 std::cin >> temp;
+
+                printf("<<< ");
+                char c;
+                while ((c = serialGetchar(psoc_handle)) >= 0) {
+                    printf("%c", (char) c);
+                }
+                printf("\n");
             }
             // Reset: flush points[] and reset betas
             points.clear();
@@ -491,6 +511,7 @@ int main(int argc, char *argv[]) {
             beta_z.fill(0);
             beta_R = COEF_REST;
             stopped = false;
+            state = waiting;
         }
     }
 
