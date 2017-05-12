@@ -1,4 +1,4 @@
-TARGET=sshserial
+TARGET=sshserial_view
 CC=g++
 LIBS=-lwiringPi
 CFLAGS=-I.

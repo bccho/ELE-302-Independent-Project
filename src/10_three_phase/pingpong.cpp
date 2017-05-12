@@ -433,19 +433,19 @@ int main(int argc, char *argv[]) {
                 beta_R = new_beta_R;
             }
 
-            // Predict bounce location
-            Point3D ptTarget = predictBounceLocation(beta_x, beta_y, beta_z, points.front());
+            /* // Predict bounce location */
+            /* Point3D ptTarget = predictBounceLocation(beta_x, beta_y, beta_z, points.front()); */
 
-            /* // Predict location to need to drive to */
-            /* Point3D ptTarget = predictLocationGoto(beta_x, beta_y, beta_z, beta_R, */
-            /*         points.front(), PADDLE_Z); */
+            // Predict location to need to drive to
+            Point3D ptTarget = predictLocationGoto(beta_x, beta_y, beta_z, beta_R,
+                    points.front(), PADDLE_Z);
 
             /* Print all info */
             if (verbose > 1) {
                 printf("%10.3f", ptNow.getT());
                 printf(", %10.3f, %10.3f, %10.3f, %10.3f", beta_z(0), beta_z(1), beta_z(2), beta_R);
-                printf(", %10.3f, %10.3f, %10.3f, %2d",
-                        ptExp.getX(), ptExp.getY(), ptExp.getZ(), state);
+                printf(", %10.3f, %10.3f, %10.3f",
+                        ptExp.getX(), ptExp.getY(), ptExp.getZ());
                 printf(", %10.3f, %10.3f, %10.3f, %3d",
                         ptNow.getX(), ptNow.getY(), ptNow.getZ(), points.size());
 
@@ -453,8 +453,8 @@ int main(int argc, char *argv[]) {
             }
             double timeLeft = ptTarget.getT() - ptNow.getT() + points.front().getT();
             if (points.size() > 2) {
-                printf(", %10.3f, %10.3f, %10.3f, %10.3f\n",
-                        timeLeft, ptTarget.getX(), ptTarget.getY(), ptTarget.getZ());
+                printf(", %10.3f, %2d, %10.3f, %10.3f, %10.3f\n",
+                        timeLeft, state, ptTarget.getX(), ptTarget.getY(), ptTarget.getZ());
             }
 
             /* Send instructions to PSoC */
@@ -490,20 +490,17 @@ int main(int argc, char *argv[]) {
             points.clear();
         }
         if (stopped) {
-            std::string temp;
-            while (temp != "y") {
-                // Kill motors
-                printf(">>> GO(0, 0, 0, 0.5)\n\0");
-                serialPrintf(psoc_handle, "GO(0, 0, 0, 0.5)\n\0");
-                std::cin >> temp;
+            // Kill motors
+            printf(">>> GO(0, 0, 0, 0.5)\n\0");
+            serialPrintf(psoc_handle, "GO(0, 0, 0, 0.5)\n\0");
 
-                printf("<<< ");
-                char c;
-                while ((c = serialGetchar(psoc_handle)) >= 0) {
-                    printf("%c", (char) c);
-                }
-                printf("\n");
+            printf("<<< ");
+            char c;
+            while ((c = serialGetchar(psoc_handle)) >= 0) {
+                printf("%c", (char) c);
             }
+            printf("\n");
+
             // Reset: flush points[] and reset betas
             points.clear();
             beta_x.fill(0);
