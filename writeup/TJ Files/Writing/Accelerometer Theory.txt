@@ -1,0 +1,9 @@
+Accelerometer Theory
+
+An accelerometer measures acceleration relative to its own orientation. Therefore, as the robot spins and the accelerometer spins with it, the accelerometer will not be measuring acceleration in a consistent direction. To get meaningful readings from the accelerometer, we need to use information about our orientation from the gyroscope to correctly project the accelerometer’s acceleration readings to global, constant axes. Further, the accelerometer is not mounted at the center of the robot, so as the robot spins, centrifugal force will add a false acceleration to the accelerometer. This acceleration needs to be subtracted off to get accurate readings.
+
+Let x_{raw} and y_{raw} be the original readings of the accelerometer. First, we need to subtract off the effect of centrifugal force. As in Figure [Accelerometer 1], let the angle between the negative y-axis and the accelerometer be \alpha, the distance between the center of mass of the robot and the accelerometer be r, and the rate of rotation be \omega. Then $x_1 = x_{raw} + r{\omega^2}\cos{\alpha}$ and $y_1 = y_{raw} + r{\omega^2}\sin{\alpha}$, where x_1 and y_1 are the adjusted accelerations.
+
+Let \theta be the angle between the accelerometer and global coordinates as in Figure [Accelerometer 2]. Then $y = x_1\cos{\theta} - y_1\sin{\theta}$ and $x = -x_1\sin{\theta} - y_1\cos{\theta}$, where x and y are global x and y accelerations. 
+
+With these calculations, the global x and y accelerations can be double integrated to determine the position of the car at any time.

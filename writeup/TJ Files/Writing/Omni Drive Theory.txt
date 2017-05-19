@@ -1,0 +1,13 @@
+Omni-Drive Theory
+
+Let \theta be the angle between global forward (the y-axis in Figure[Omni-Drive 1]) and the current orientation of the robot (the direction specified by the line labeled “F” on the robot in Figure [Omni-Drive 1]). Let \alpha be the angle between global forward and the desired heading (the green line in Figure [Omni-Drive 1]).
+
+Let M1, M2, etc be the magnitude and direction of motors 1, 2, etc, where positive values indicate forward direction (the direction required to make the robot move forward relative to the robot’s orientation), and negative indicate backwards. The range of these values then is [-1, 1].
+
+The simple drive case is the one in which the robot is not rotating. In this case, $M1=M3$ and $M2=M4$. If we switch to a coordinate system aligned to the axis of the motors as in Figure [Omni-Drive 2], then it is clear that $\tan{\beta} = \frac{M2}{M1}$, where \beta is the desired heading of the car relative to the new coordinate system. In terms of \theta and \alpha, $\beta = \alpha - \theta + \frac{\pi}{4}$, so $\tan{(\alpha - \theta + \frac{\pi}{4})} = \frac{M2}{M1}$.
+
+Allowing rotations of the car only complicates this slightly. Rotations can be achieved by simply offsetting the speeds of M1 and M3 relative to each other, and the same for M2 and M4. Let s be the speed of rotation from [-1, 1]. Then $s = \frac{M2-M4}{2} = \frac{M3-M1}{2}$.
+
+When the car is rotating, the average of M2 and M4 remains constant for any s and likewise for M1 and M3, so our original equation can now be rewritten as $\tan{(\alpha - \theta + \frac{\pi}{4})} = \frac{(M2+M4)/2}{(M1+M3)/2} = \frac{M2+M4}{M1+M3}$. 
+
+The final equation of motion is simply a constant that $max(M1, M2, M3, M4) = M$, where M is the magnitude of movement in the direction specified by \beta. Together, these three equations, functions of \alpha, \theta, s, and M, fully specify the control of the four wheels.
