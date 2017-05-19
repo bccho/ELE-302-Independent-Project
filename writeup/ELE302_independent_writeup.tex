@@ -27,6 +27,7 @@
 
     \newcommand*{\figref}[1]{\textbf{\figurename~\ref{#1}}}
     \newcommand*{\tblref}[1]{\textbf{\tablename~\ref{#1}}}
+    \newcommand*{\secref}[1]{\textbf{Section~\ref{#1}}}
 
     \newcommand{\iic}{I$^2$C\xspace}
     \renewcommand{\v}[1]{\vec{#1}}
@@ -132,11 +133,59 @@ However, this introduced a new free parameter, $R$, that happens to be critical 
 Finally, once the kinematic parameters were estimated, it was trivial to predict the location of the ball in global coordinates for any point in time in the future. Specifically, the landing location could be estimated by computing the roots of the $z$ polynomial, and by simple extension, the location of the ball at any height (since our paddle was vertically fixed) could be estimated using some more quadratic formulas.
 
 \subsection{Omni-drive}
-%TODO: TJ: give BC equations and BC typesets them
+Let $\theta$ be the angle between global forward (the y-axis in \figref{fig:omni1}) and the current orientation of the robot (the direction specified by the line labeled ``F'' on the robot in \figref{fig:omni1}). Let $\alpha$ be the angle between global forward and the desired heading (the green line in \figref{fig:omni1}).
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.6\textwidth]{images/omni1.pdf}
+    \caption{\textbf{Global directions for omni-drive theory.}}
+    \label{fig:omni1}
+\end{figure}
+Let $M1$, $M2$, etc. be the magnitude and direction of motors 1, 2, etc., where positive values indicate forward direction (the direction required to make the robot move forward relative to the robot’s orientation), and negative indicate backwards. The range of these values then is $[-1, 1]$.
+
+The simple drive case is the one in which the robot is not rotating. In this case, $M1=M3$ and $M2=M4$. If we switch to a coordinate system aligned to the axis of the motors as in \figref{fig:omni2}, then it is clear that $\tan{\beta} = \frac{M2}{M1}$, where $\beta$ is the desired heading of the car relative to the new coordinate system. In terms of $\theta$ and $\alpha$, then, $\beta = \alpha - \theta + \frac{\pi}{4}$, so \[\tan{(\alpha - \theta + \frac{\pi}{4})} = \frac{M2}{M1}.\]
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.6\textwidth]{images/omni2.pdf}
+    \caption{\textbf{Relative directions for omni-drive theory.}}
+    \label{fig:omni2}
+\end{figure}
+
+Allowing rotations of the car only complicates this slightly. Rotations can be achieved by simply offsetting the speeds of $M1$ and $M3$ relative to each other, and the same for $M2$ and $M4$. Let s be the speed of rotation from $[-1, 1]$. Then \[s = \frac{M2-M4}{2} = \frac{M3-M1}{2}.\]
+
+When the car is rotating, the average of $M2$ and $M4$ remains constant for any $s$ and likewise for $M1$ and $M3$, so our original equation can now be rewritten as \[\tan\paren{\alpha - \theta + \frac{\pi}{4}} = \frac{(M2+M4)/2}{(M1+M3)/2} = \frac{M2+M4}{M1+M3}.\]
+
+The final equation of motion is simply a constant that $\max\brace{M1, M2, M3, M4} = M$, where $M$ is the magnitude of movement in the direction specified by $\beta$. Together, these three equations, functions of $\alpha$, $\theta$, $s$, and $M$, fully specify the control of the four wheels.
+
+\subsection{Accelerometer}
+An accelerometer measures acceleration relative to its own orientation. Therefore, as the robot spins and the accelerometer spins with it, the accelerometer will not be measuring acceleration in a consistent direction. To get meaningful readings from the accelerometer, we need to use information about our orientation from the gyroscope to correctly project the accelerometer’s acceleration readings to global, constant axes. Further, the accelerometer is not mounted at the center of the robot, so as the robot spins, centrifugal force will add a false acceleration to the accelerometer. This acceleration needs to be subtracted off to get accurate readings.
+
+Let $x\sub{raw}$ and $y\sub{raw}$ be the original readings of the accelerometer. First, we need to subtract off the effect of centrifugal force. As in \figref{fig:accel1}, let the angle between the negative $y$-axis and the accelerometer be $\alpha$, the distance between the center of mass of the robot and the accelerometer be $r$, and the rate of rotation be $\omega$. Then \[x_1 = x\sub{raw} + r{\omega^2}\cos{\alpha}\] and \[y_1 = y\sub{raw} + r{\omega^2}\sin{\alpha},\] where $x_1$ and $y_1$ are the adjusted accelerations.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.4\textheight]{images/accel1.pdf}
+        \caption{Definitions for centrifugal force corrections to accelerometer readings.}
+        \label{fig:accel1}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.4\textheight]{images/accel2.pdf}
+        \caption{Angle definitions for accelerometer theory.}
+        \label{fig:accel2}
+    \end{subfigure}
+    \caption{\textbf{Definitions for accelerometer theory.}}
+\end{figure}
+
+Let $\theta$ be the angle between the accelerometer and global coordinates as in \figref{fig:accel2}. Then $y = x_1\cos{\theta} - y_1\sin{\theta}$ and $x = -x_1\sin{\theta} - y_1\cos{\theta}$, where $x$ and $y$ are global $x$ and $y$ accelerations. 
+
+With these calculations, the global $x$ and $y$ accelerations can be double integrated to determine the position of the car at any time.
 
 \clearpage
 \section{Hardware}
-\figref{fig:pics} shows photographs of the final product from various angles, annotated with important components
+\figref{fig:pics} shows photographs of the final product from various angles, annotated with important components.
 \begin{figure}[H]
     \centering
     \begin{subfigure}[t]{0.8\textwidth}
@@ -164,7 +213,6 @@ Finally, once the kinematic parameters were estimated, it was trivial to predict
     \caption{\textbf{Photographs of the final robot.}}
     \label{fig:pics}
 \end{figure}
-%TODO: BC: block diagram
 
 \figref{fig:blockdiagram} shows a block diagram of the hardware set-up.
 \begin{figure}[ht]
@@ -175,6 +223,15 @@ Finally, once the kinematic parameters were estimated, it was trivial to predict
 \end{figure}
 
 \subsection{Chassis}
+The chassis consists of two decks of components: a lower deck for the motors, H-bridges, and power (voltage regulator) board; and an upper deck for the Raspberry Pi, PSoC, accelerometer/gyro, and mounting points for the mast, which contains the two Pixy cameras. Since we inherited Gordon and Pfleger's chassis from 2016, we re-used their lower deck after aesthetically modifying the H-bridges, replacing bent set screws from the wheel hubs, and replacing the power board with our own voltage regulator board. On the other hand, we completely re-designed the top deck to suit our purposes. See \figref{fig:topdeck} for the laser cutting template for the top deck:
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/topdeck.png}
+    \caption{\textbf{Laser cut template for top deck.}}
+    \label{fig:topdeck}
+\end{figure}
+
+We adapted the voltage regulator board from the speed control and navigation assignments: it has two linear \SI{5}{V} voltage regulators (LM7805) and many mounting points for both unregulated and regulated voltages (see \secref{sec:power} for details).
 %TODO: BC: two decks: lower deck for motors, H bridges, voltage regulator and batteries (we used our own VR because of power requirements); upper deck for RPi, PSoC, accel/gyros
 %TODO: BC: figure of laser cut top deck
 
@@ -230,6 +287,7 @@ Finally, once the kinematic parameters were estimated, it was trivial to predict
 \end{figure}
 
 \subsection{Power supply}
+\label{sec:power}
 %TODO: BC: voltage regulators
 %TODO: BC: supplying power to the rpi, and difficulties we had
 
