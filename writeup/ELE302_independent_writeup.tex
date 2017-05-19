@@ -59,7 +59,7 @@ By Demo Day, we had implemented the hardware and software to achieve objectives 
 
 We used two Pixy cameras (CMUcam5) placed a fixed distance apart on the robot to triangulate the location of a bright red ball in three-dimensional coordinates. Once the camera system had collected enough data points to accurately predict all future positions of the ball until the second bounce, the robot moved to a location where the ball would bounce to the center of a paddle attached to its side, and provided a brief flick to the paddle to return the ball.
 
-The speed and flexibility of movement we needed (we had to move up to 3 feet in less than half a second) required us to abandon the chassis used for our previous speed control and navigation assignments and adopt the large and powerful omni-wheel drive used by Ethan Gordon and Luke Pfleger in 2016. We used an accelerometer and gyroscope for dead reckoning of position (we could no longer use wheel rotation tracking because of slippage). In addition, we continued to use the PSoC 5LP because of its extensive motor control capacity (we required four PWM modules) while adding a Raspbery Pi 3 because of the intensive computation we expected to require for ball tracking and trajectory estimation.
+The speed and flexibility of movement we needed (we had to move up to 3 feet in less than half a second) required us to abandon the chassis used for our previous speed control and navigation assignments and adopt the large and powerful omni-wheel drive used by Ethan Gordon and Luke Pfleger in 2016. We used an accelerometer and gyroscope for dead reckoning of position (we could no longer use wheel rotation tracking because of slippage). In addition, we continued to use the PSoC 5LP because of its extensive motor control capacity (we required four PWM modules) while adding a Raspbery Pi 3 Model B because of the intensive computation we expected to require for ball tracking and trajectory estimation.
 
 \section{Theory}
 \subsection{Stereo vision}
@@ -218,6 +218,7 @@ With these calculations, the global $x$ and $y$ accelerations can be double inte
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.85\textwidth]{images/BlockDiagram.pdf}
+    %TODO: block diagram
     \caption{\textbf{Block diagram of the hardware setup for ping pong.} Black connections indicate ground connections; red connections indicate power (both regulated and unregulated); all other connections indicate data connections (e.g. from the PSoC to the H-bridges and servo, various \iic connections). Green components indicate power-related components; red components indicate actuators; blue components indicate sensors.}
     \label{fig:blockdiagram}
 \end{figure}
@@ -232,83 +233,113 @@ The chassis consists of two decks of components: a lower deck for the motors, H-
 \end{figure}
 
 We adapted the voltage regulator board from the speed control and navigation assignments: it has two linear \SI{5}{V} voltage regulators (LM7805) and many mounting points for both unregulated and regulated voltages (see \secref{sec:power} for details).
-%TODO: BC: two decks: lower deck for motors, H bridges, voltage regulator and batteries (we used our own VR because of power requirements); upper deck for RPi, PSoC, accel/gyros
-%TODO: BC: figure of laser cut top deck
 
 \subsection{Omni-wheel drive}
-%TODO: TJ: what an omni-drive can achieve (i.e. why we needed it), what it requires (independent bidirectional throttled control of four)
-\subsubsection{Motors and chassis}
-%TODO: TJ: description of motors, chassis (dimensions, components (3D printed components), set screws, etc. - refer to Gordon and Pfleger, 2016), electrical current requirements
-\subsubsection{H-bridges and motor control}
-%TODO: TJ: description of H-bridges
-%TODO: TJ: differences from Gordon and Pfleger (no open-drain comparators)
-%TODO: TJ: description of PWM system we used (phase anti-lock? whatever we used)
-%TODO: TJ: powered from one 7.2 V NiCd
+Because the ping-pong ball can land anywhere in space, we needed a robot that could quickly move anywhere in space. Because it is very difficult to do this with conventional steering systems, we decided to use an omni-directional drive (or omni-drive). An omni-drive consists of four wheels mounted at right angles to each other. These wheels have rollers along their circumference, allowing them to be pushed orthogonally to their direction of rotation. The rollers allow the robot to move in any direction, and the fact that the wheels can be independently controlled allows the sum of the forces to point in any direction. Together, this translates to a robot that can drive in any direction.
 
-\subsection{Cameras and mast}
-%TODO: BC: camera specifications and details (resoltuion, frame rate, its algorithm and communication protocols)
-%TODO: BC: figure of laser cut mast
-%TODO: BC: communication protocol
+\subsubsection{Motors and chassis}
+As mentioned previously in this report, we used an omni-drive chassis that had already been built last year by Ethan Gordon and Luke Pfleger. The main body is laser cut acrylic, with four 3D printed and acrylic motor mounts along the sides. The motors are \SI{22}{mm} diameter, $20.4:1$ geared, high power Pololu Gearmotors, and the wheels are 4'' VEX omni-wheels. All four motors are run off a single \SI{7.2}{\volt} NiCd battery. We made no real changes to this chassis, besides redoing some of the wiring and replacing the set screws for the wheels, as mentioned in the previous section.
+
+\subsubsection{Motor controllers}
+\label{sec:hbridge}
+An omni-drive requires 4 independent controllers capable of driving forwards and backwards and controlling throttle. To do this, we use H-bridges. H-bridges use four transistors to completely select power and ground for each terminal of the motor as shown in \figref{fig:hb-dummy}. By turning on different transistors, the H-bridge can direct current through the motor in either direction, and can brake the motor by connecting both terminals to either power or ground. Since the switching is controlled by transistors, they can be given PWM signals, which allows for throttle control.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[height=0.3\paperheight,
-                     angle=0, origin=c]{images/MastLabeled.jpg}
-    \caption{\textbf{Camera mounted on mast.} Labels indicate the mast, the camera and the cable connecting the camera to the camera board.}
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.4\textheight]{images/hbridge.pdf}
+        \caption{H-bridge dummy circuit diagram.}
+        \label{fig:hb-dummy}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \includegraphics[height=0.4\textheight]{images/hbridge-circuit.pdf}
+        \caption{Actual H-bridge circuit diagram.}
+        %TODO: this image
+        \label{fig:hb-circuit}
+    \end{subfigure}
+    \caption{\textbf{H-bridge circuit diagrams.}}
+    \label{fig:hbridge}
+\end{figure}
+
+This basic idea is very simple, but there are many complications in the design of an H-bridge. The first of these arises from our use of PWM signals. A PWM signal has both an ``on'' period and an ``off'' period. During the ``on'' period, one side of the motor must be connected to ground and the other must be connected to power. To make things concrete, let's assume we are driving the motor in a direction such that the left side is connected to ground and the right is connected to power. The question, then, is what to do during the ``off'' period. Since the motor has inductance, it is a bad idea to completely disconnect the motor during the ``off'' period, as this will force the back EMF to drop across the internal diodes of the transistors. Our remaining options then, are to reverse the motor during the ``off'' period, or to brake it. Reversing the motor during the ``off'' period is known as lock anti-phase drive, and braking it is known as phase-magnitude drive.
+
+The second complication with H-bridges is that if two transistors on the same side of the H-bridge are ever turned on at the same time, they create a direct short from power to ground. The H-bridge, then, must be designed in such a way that two same-side transistors cannot be on at the same time.
+
+The chassis we used also had H-bridges that had already been built. The circuit diagram and board image is shown in \figref{fig:hb-circuit}. NMOS transistors are used on the ground side, and PMOS transistors are used on the power side. Each gate has an inline \SI{1.1}{\kilo\ohm} resistor to protect the PSoC from back EMF spikes. The left side gates are wired directly together, as are the right side gates. Given a low signal, then, the PMOS will turn on and the NMOS will turn off, connecting the motor terminal to power. Given a high signal, the PMOS will turn off and the NMOS will turn on, connecting the motor terminal to ground. Since we never want to motor to be floating (as that causes the back EMF to drop across the FET diodes), this arrangement works well.
+
+Since we are operating the motors at \SI{7.2}{\volts}, the PMOS transistors need an input close to that to turn off. The PSoC drives its outputs at \SI{3.3}{\volts} which is not nearly high enough to achieve this. The original design used open drain comparators with a threshold set at \SI{1.5}{\volts} to achieve the higher voltage. The \SI{750}{\ohm} pull-up resistors in the circuit diagram act as the pull-ups for the open-drain outputs. Since the PSoC has its own internally configurable open drain outputs, we simply used those to directly drive the H-bridges, eliminating the original comparators. The pull-up resistors also serve to connect both terminals of the motor to ground in the event of a PSoC failure, creating a safe failure condition.
+
+Gordon and Pfleger used lock anti-phase drive, and this influenced several of their H-bridge design decisions. Since the ``off'' time PWM signal is in reverse, the stop condition for the motors is a $50\%$, duty cycle, such that the motor is connected forwards half the time and backwards the other half of the time. According to their report, the first time they tried this, with a fairly standard \SI{100}{\hertz} PWM, they burned out two motors. To avoid burning out their motors, they had to increase their frequency to about \SI{10}{\kilo\hertz} This high frequency required making the pull-up resistors very small, to make the time constant of the transistors' gate capacitances low enough to allow them to actually turn on and off with the input signal. We believe that the main cause of their motors burning out was their choice of phase anti-lock drive. The frequency was high enough that the motors did not turn, as intended, but was also low enough that there was enough time for the current to reach full stall current in each direction, thereby burning out the motors.
+
+We chose to use phase-magnitude drive, if only for the simple reason that it is more efficient to brake the motor during the ``off'' time than it is to reverse it. This also came with the benefit that we believe we could have safely run the motors at a much lower PWM frequency, as the stop condition for phase-magnitude drive is simply braking without any PWM signal, so nothing can stall. We only apply a PWM signal when the motor is actually supposed to turn, so any frequency should be safe. If the motor were to actually stall, it is possible that the high frequency would help protect the motor, but otherwise, we believe a lower frequency would have been safe. However, we decided to leave the frequency at \SI{10}{\kilo\hertz}, since we knew that was absolutely safe. We did occasionally see some problems where the motor would have trouble starting at low speeds (for example, going from off to a $30\%$ duty cycle, the motor would occasionally stall briefly and require a push to get going). A lower frequency might have given the motor more sustained current and allowed it to start more reliably at lower speeds.
+
+The specific details of the control signals \texttt{C1} and \texttt{C2} required to drive the H-bridge in sign-magnitude mode will be given when we discuss the hardware programmable hardware required to implement them in \secref{sec:prog-hard-motor}.
+
+\subsection{Dead reckoning}
+Since the very principle of an omni-drive's motion is dependent on the wheels slipping, we cannot track the wheels' motion to determine the position of our robot. Instead, we use dead reckoning. To implement dead reckoning, we use a 9-DOF combined accelerometer, gyroscope, and magnetometer, the LSM9DS0 chip from ST Microelectronics, mounted on an Adafruit breakout board. This chip communicates with the PSoC through \iic.
+
+\subsection{Cameras and mast}
+The CMUcam5 (Pixy camera, or simply ``Pixy'') is a low-cost computer vision system developed by CMU and Charmed Labs that can be easily trained to recognize colored objects. The Pixy uses the OV9715 CMOS WXGA (1-MP) image sensor, which supports $1280\times 800$ resolution at \SI{25}{fps} or $640\times 400$ resolution at \SI{50}{fps}. Because of the memory limitations of the on-board microcontroller and to achieve the higher frame rate, the CMUcam5 default firmware restricts the resolution to $640\times 400$. Furthermore, the object detection algorithm outputs object coordinates and dimensions at $320\times 200$ resolution.
+
+The Pixy outputs its data either through USB (which can interface with the Raspberry Pi with the \texttt{libpixyusb} library provided), or various serial protocols such as SPI, \iic, and UART (it can even output as raw analog/digital). Initially, we attempted to interface with the Pixy cameras using SPI due to its speed, but because of bus collisions with two cameras (even with the chip-enable functionality), we decided to use \iic with two addresses.
+
+The Pixy cameras were mounted \SI{8.5}{inches} apart on the mast at the front of the robot to permit stereo vision, and were connected to the Raspberry Pi with ribbon cables. See \figref{fig:mast} for the laser cut template of the camera mast. We included four possible mounting positions for the Pixy cameras: the top two were the intended mounting positions, but if the cameras were too high to detect the ball, we would have moved the cameras to the bottom two mounting positions. With the cameras on the top mounting positions, the cameras were approximately \SI{260}{mm} above the ground.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/mast.png}
+    \caption{\textbf{Laser cut template for camera mast.}}
     \label{fig:mast}
 \end{figure}
 
-
 \subsection{Paddle mount}
-%TODO: TJ: CAD models and servo specifications
+We wanted to be able to control the angle of the ping-pong paddle as we hit the ball, so we needed to design a mount for the paddle that would allow a servo to rotate it. We used a Hitec HS-322HD servo, a very common hobby servo. We did not want the servo to be subjected to shear forces from the paddle, so our mount needed to constrain the paddle’s position, and only allow it to rotate. We decided the best way to do this would be to encase the servo's handle in a cylinder, and then let that cylinder rotate within another cylinder. The first cylinder evens out the surface of the handle, and then the second constrains its motion to just rotation.
+
+The inner mount was made in two halves so that we could simply screw each half into the handle. See \figref{fig:paddle} for images of all the parts. The servo mounts right in line with the paddle, and directly drives its rotation. Once the servo is attached to the mount, the paddle simply slides into the mount and connects to the servo. We included two holes through the mount to allow a faceplate to be attached after the paddle is slid in, to stop the paddle from sliding out when the robot rotates. However, we did not have long enough screws or threaded rods to attach such a faceplate, so we instead ran some zip-ties across the face to secure the paddle.
 
 \begin{figure}[ht]
     \centering
-    \begin{subfigure}[b]{0.45\textwidth}
-        \centering
-        \includegraphics[height=3in,
-                         angle=0, origin=c]{images/CameraBoard.JPG}
-        \caption{Photograph}
-    \end{subfigure}%
-    \begin{subfigure}[b]{0.55\textwidth}
-        \centering
-        \includegraphics[height=3in,
-                         trim=0 0 0 0, clip]{images/CameraBoard.pdf}
-        \caption{Schematic}
-    \end{subfigure} \\ \vspace{1cm}
-    \begin{subfigure}[b]{0.99\textwidth}
-        \centering
-        \includegraphics[width=\textwidth,
-                         trim=0 0 0 0, clip]{images/CameraBoard_circuit.pdf}
-        \caption{Circuit diagram}
-    \end{subfigure}
-    \caption{\textbf{Circuitry of the camera board.}}
-    \label{fig:cameraboard}
+    \includegraphics[width=0.7\textwidth]{images/paddle.png}
+    %TODO: this image
+    \caption{\textbf{Images of 3D-printed paddle mount parts.}}
+    \label{fig:paddle}
+\end{figure}
+
+The mount had to fit in a very tight area, so to avoid having to go through many iterations as we discovered clearance issues, we made a mock model of our robot that included everything we thought could be a clearance issue. The mock robot model is shown in wireframe in \figref{fig:mock}, with the inner mount in green, the outer mount in blue, and the servo in red. This assembly allowed us to successfully design the mount on our first try.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/mock.png}
+    %TODO: this image
+    \caption{\textbf{Wireframe mock model of robot for paddle mount assembly.}}
+    \label{fig:mock}
 \end{figure}
 
 \subsection{Power supply}
 \label{sec:power}
-%TODO: BC: voltage regulators
-%TODO: BC: supplying power to the rpi, and difficulties we had
+To power the electronics of the robot (all but the four omni-drive motors), we used a single \SI{9.6}{V} NiMH battery. Two linear voltage regulators provided power for the accelerometer board and the paddle servo motor (one regulator each), and unregulated \SI{9.6}{V} was provided to the PSoC (which had an internal regulator), the two Pixy cameras (which had their own regulators), and the Raspberry Pi via an adjustable output buck (DC-DC step-down) converter.
+
+We initially attempted powered the Raspberry Pi with regulated \SI{5}{V} through the GPIO pins, because the \SI{5}{V} pins and ground are shared across the whole device. This is highly discouraged these rails are not protected, while the micro USB port is protected with a polyfuse (a resettable fuse). We quickly decided to adapt a spare micro USB cable so that the Raspberry Pi could be powered through the USB port. We also quickly discovered that the Raspberry Pi drew too much current (about \SI{0.1}{A} when idle, and up to about \SI{0.6}{A} when booting or compiling C++) to power from a linear voltage regulator: with a voltage drop of \SI{4.6}{V} and a current of \SI{0.5}{A}, a linear voltage regulator would dissipate about \SI{2.3}{W} of power when booting; the voltage regulator would heat up unacceptably even with a heatsink, and it depleted the batteries too quickly for acceptable usage. Because of this, we powered the Raspberry Pi through a Drok LM2595 analog control voltage controller (a DC-DC step-down converter). Conveniently, this converter also doubled as a battery level meter for the \SI{9.6}{V} battery.
 
 \subsection{Programmable hardware}
-%TODO: BC: topdesign
 \figref{fig:topdesign} shows the top-design of our programmable hardware in PSoC Creator 2.1.
 \begin{figure}[ht]
     \centering
-    \includegraphics[height=0.99\textwidth,
-                     angle=-90, origin=c,
-                     trim=1.2in 1in 1.8in 1in, clip]{images/topdesign.pdf}
-    \vspace*{-3cm}
-    \caption{\textbf{Top-design of the navigation project.}}
+    \includegraphics[width=0.99\textwidth]{images/topdesign.pdf}
+    \caption{\textbf{Top-design of the ping pong project.}}
     \label{fig:topdesign}
 \end{figure}
 
 \subsubsection{Hardware for motor control}
-%TODO: TJ
+\label{sec:prog-hard-motor}
+Phase-magnitude drive requires a PWM signal where the ``on'' time signal drives the motor in the intended direction and the ``off'' time signal brakes the motor. Since the H-bridge circuit as described in \secref{sec:hbridge} defaults to connecting each motor terminal to ground, this can be achieved by simply sending a normal PWM signal to one of the inputs \texttt{C1} or \texttt{C2} and letting the other input remain pulled high by the H-bridge circuit. When the PSoC drives \texttt{C1} low, the left terminal is connected to power and the motor goes forward, and when the PSoC releases \texttt{C1}, the left terminal is pulled back high an the motor brakes. To go in reverse, the PSoC simply needs to drive \texttt{C2} instead of \texttt{C1}.
 
-\subsubsection{Hardware for dead reckoning}
-%TODO: TJ
+This, then, breaks the control into two very natural signals, direction and magnitude. The PWM signal controls the magnitude of rotation, and changing which terminal it goes into controls the direction of rotation. We implemented this scheme in the programmable hardware with PWM blocks and demultiplexers (i.e., switches). There is one PWM block per motor, and each PWM block outputs into a demultiplexer which selects between forward and reverse based on a software control signal. The software control signals come from the \verb|Control_Reg_Direction| block. This is the complete picture of the control at a high level, but a couple more additions were required to make it actually work. The final control signal outputs of the PSoC are open drain, so ``on'' corresponds to a low signal and ``off'' corresponds to a high signal. Demuxes output low on all unused inputs, which is the opposite behavior to what is desired, so we had to invert all of the demux outputs to make them default to floating rather than pulling low. This also had the convenient effect of making the high side of the PWM signal correspond to driving the output low, which is what turns the motor on, so on the software side, the duty cycle maps directly to throttle rather than inversely.
+
+
+\subsubsection{Other hardware}
+The servo that controls the angle of the paddle is directly controlled by a single PWM block, \verb|PWM_Servo|. We continued to use a UART block to communicate with our computers for debugging, and added a second, \verb|Serial_Pi| to communicate with the Raspberry Pi. We also have a master I2C block that manages communication with the accelerometer/gyro chip. There is also a counter block, \verb|Counter_Refresh|, which is used as a refresh timer. It interrupts at a rate of \SI{1}{\kilo\hertz}. Finally, we have another counter, \verb|Counter_Time|, on a slower clock, that is used to accurately keep track of time.
 
 \section{Software for PSoC}
 
@@ -323,7 +354,32 @@ We adapted the voltage regulator board from the speed control and navigation ass
 
 \section{Software for Raspberry Pi}
 \subsection{Pixy camera communication}
-%TODO: BC
+Initially, to implement SPI communication with a single Pixy camera, we adapted the code from this GitHub repository: \url{https://github.com/omwah/pixy_rpi}. This has an implementation of SPI communication using \verb|wiringPiSPI.h| from the \verb|WiringPi| library by Gordon Henderson, as well as a general Pixy data processing interface using the object block format found in the Porting Guide of the Pixy camera: \url{http://cmucam.org/projects/cmucam5/wiki/Porting_Guide}. The files are organized such that \verb|Pixy.h| defines the class \verb|LinkSPI|, which abstracts the communciation protocol with the SPI interface, \verb|TPixy.h| defines the class \verb|TPixy|, which abstracts the object block protocol further and maintains a buffer of received blocks, and \verb|echo.cpp| uses the \texttt{TPixy} class defined in \texttt{TPixy.h} to echo blocks to standard output. Abstracted in this way, the client code becomes very simple:
+\begin{minted}[breaklines]{c}
+#include <Pixy.h>
+
+Pixy pixy;
+
+int main() {
+    int j;
+    uint16_t blocks;
+    while (true) {
+        blocks = pixy.getBlocks();
+        if (blocks) {
+            std::cout << "Detected " << blocks << std::endl;
+            for (j = 0; j < blocks; j++) {
+                std::cout << "  block " << j << " ";
+                pixy.blocks[j].print();
+            }
+        } else {
+            std::cout << "No blocks detected" << std::endl;
+        }
+    }
+    return 0;
+}
+\end{minted}
+
+As mentioned earlier, however, SPI proved not flexible enough for communication with two Pixy cameras---at least in the \texttt{WiringPi} implementation of the SPI library---so we transitioned to \iic. This transition ended up being rather simple, because we only had to change a handful of functions to handle the difference in endianness, and to use the \verb|WiringPiI2C.h| header instead. The full implementation communication code can be found in the appendix.
 
 \subsection{Stereo vision}
 %TODO: BC
