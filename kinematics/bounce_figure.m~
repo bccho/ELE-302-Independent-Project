@@ -1,0 +1,27 @@
+load('bounce_02_09z.mat', 't', 'z')
+z = z - 20;
+
+%% Raw bounce
+figure
+ax = gca;
+hp = plot(t, z, '.-');
+ylabel('Height above ground, mm')
+xlabel('Time, s')
+hp.MarkerSize = 10;
+hp.LineWidth = 0.7;
+ax.FontSize = 12;
+xlim([0, max(t)])
+
+%% Demonstration of transform
+z_sub = z(31:70);
+t_sub = t(31:70);
+z_before = z_sub(1:22);
+t_before = t_sub(1:22);
+z_after = z_sub(23:end);
+t_after = t_sub(23:end);
+t_bounce = 1.05;
+
+t_after = t_sub(
+
+figure
+plot(t_sub,z_sub)

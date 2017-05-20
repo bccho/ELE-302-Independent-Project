@@ -147,7 +147,7 @@ Let $\theta$ be the angle between global forward (the y-axis in \figref{fig:omni
     \caption{\textbf{Global directions for omni-drive theory.}}
     \label{fig:omni1}
 \end{figure}
-Let $M1$, $M2$, etc. be the magnitude and direction of motors 1, 2, etc., where positive values indicate forward direction (the direction required to make the robot move forward relative to the robot’s orientation), and negative indicate backwards. The range of these values then is $[-1, 1]$.
+Let $M1$, $M2$, etc. be the magnitude and direction of motors 1, 2, etc., where positive values indicate forward direction (the direction required to make the robot move forward relative to the robot's orientation), and negative indicate backwards. The range of these values then is $[-1, 1]$.
 
 The simple drive case is the one in which the robot is not rotating. In this case, $M1=M3$ and $M2=M4$. If we switch to a coordinate system aligned to the axis of the motors as in \figref{fig:omni2}, then it is clear that $\tan{\beta} = \frac{M2}{M1}$, where $\beta$ is the desired heading of the car relative to the new coordinate system. In terms of $\theta$ and $\alpha$, then, $\beta = \alpha - \theta + \frac{\pi}{4}$, so \[\tan{(\alpha - \theta + \frac{\pi}{4})} = \frac{M2}{M1}.\]
 
@@ -166,7 +166,7 @@ The final equation of motion is simply a constant that $\max\brace{M1, M2, M3, M
 
 \subsection{Accelerometer}
 \label{sec:accel}
-An accelerometer measures acceleration relative to its own orientation. Therefore, as the robot spins and the accelerometer spins with it, the accelerometer will not be measuring acceleration in a consistent direction. To get meaningful readings from the accelerometer, we need to use information about our orientation from the gyroscope to correctly project the accelerometer’s acceleration readings to global, constant axes. Further, the accelerometer is not mounted at the center of the robot, so as the robot spins, centrifugal force will add a false acceleration to the accelerometer. This acceleration needs to be subtracted off to get accurate readings.
+An accelerometer measures acceleration relative to its own orientation. Therefore, as the robot spins and the accelerometer spins with it, the accelerometer will not be measuring acceleration in a consistent direction. To get meaningful readings from the accelerometer, we need to use information about our orientation from the gyroscope to correctly project the accelerometer's acceleration readings to global, constant axes. Further, the accelerometer is not mounted at the center of the robot, so as the robot spins, centrifugal force will add a false acceleration to the accelerometer. This acceleration needs to be subtracted off to get accurate readings.
 
 Let $x\sub{raw}$ and $y\sub{raw}$ be the original readings of the accelerometer. First, we need to subtract off the effect of centrifugal force. As in \figref{fig:accel1}, let the angle between the negative $y$-axis and the accelerometer be $\alpha$, the distance between the center of mass of the robot and the accelerometer be $r$, and the rate of rotation be $\omega$. Then \[x_1 = x\sub{raw} + r{\omega^2}\cos{\alpha}\] and \[y_1 = y\sub{raw} + r{\omega^2}\sin{\alpha},\] where $x_1$ and $y_1$ are the adjusted accelerations.
 
@@ -226,7 +226,7 @@ With these calculations, the global $x$ and $y$ accelerations can be double inte
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.85\textwidth]{images/BlockDiagram.pdf}
-    \caption{\textbf{Block diagram of the hardware setup for ping pong.} Black connections indicate ground connections; red connections indicate power (both regulated and unregulated); all other connections indicate data connections (e.g. from the PSoC to the H-bridges and servo, various \iic connections). Green components indicate power-related components; red components indicate actuators; blue components indicate sensors.}
+    \caption{\textbf{Block diagram of the hardware setup for ping pong.} Black connections indicate ground connections; red connections indicate power (both regulated and unregulated); purple connections indicate data connections (e.g. from the PSoC to the H-bridges and servo, various \iic connections). Green components indicate power-related components; red components indicate actuators; blue components indicate sensors; orange components indicate microprocessors.}
     \label{fig:blockdiagram}
 \end{figure}
 
@@ -316,7 +316,7 @@ The Pixy cameras were mounted \SI{8.5}{inches} apart on the mast at the front of
 \end{figure}
 
 \subsection{Paddle mount}
-We wanted to be able to control the angle of the ping-pong paddle as we hit the ball, so we needed to design a mount for the paddle that would allow a servo to rotate it. We used a Hitec HS-322HD servo, a very common hobby servo. We did not want the servo to be subjected to shear forces from the paddle, so our mount needed to constrain the paddle’s position, and only allow it to rotate. We decided the best way to do this would be to encase the servo's handle in a cylinder, and then let that cylinder rotate within another cylinder. The first cylinder evens out the surface of the handle, and then the second constrains its motion to just rotation.
+We wanted to be able to control the angle of the ping-pong paddle as we hit the ball, so we needed to design a mount for the paddle that would allow a servo to rotate it. We used a Hitec HS-322HD servo, a very common hobby servo. We did not want the servo to be subjected to shear forces from the paddle, so our mount needed to constrain the paddle's position, and only allow it to rotate. We decided the best way to do this would be to encase the servo's handle in a cylinder, and then let that cylinder rotate within another cylinder. The first cylinder evens out the surface of the handle, and then the second constrains its motion to just rotation.
 
 The inner mount was made in two halves so that we could simply screw each half into the handle. See \figref{fig:paddle} for images of all the parts. The servo mounts right in line with the paddle, and directly drives its rotation. Once the servo is attached to the mount, the paddle simply slides into the mount and connects to the servo. We included two holes through the mount to allow a faceplate to be attached after the paddle is slid in, to stop the paddle from sliding out when the robot rotates. However, we did not have long enough screws or threaded rods to attach such a faceplate, so we instead ran some zip-ties across the face to secure the paddle.
 
