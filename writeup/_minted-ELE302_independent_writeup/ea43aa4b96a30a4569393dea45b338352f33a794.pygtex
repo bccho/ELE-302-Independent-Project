@@ -1,0 +1,63 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/*}
+\PYG{c+cm}{  Pixy.h \PYGZhy{} Library for interfacing with Pixy.}
+\PYG{c+cm}{  Cobbled together by Omwah and Jasco May 2014}
+\PYG{c+cm}{  Based on code originally created by Scott Robinson, October 22, 2013.}
+\PYG{c+cm}{  Released into the public domain.}
+
+\PYG{c+cm}{  Modified for I2C by Byung\PYGZhy{}Cheol Cho May 2017}
+\PYG{c+cm}{*/}
+
+\PYG{c+cp}{\PYGZsh{}ifndef PIXY\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define PIXY\PYGZus{}H}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZdq{}TPixy.h\PYGZdq{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}wiringPiI2C.h\PYGZgt{}}
+
+\PYG{c+cp}{\PYGZsh{}define PIXY\PYGZus{}SYNC\PYGZus{}BYTE              0x5a}
+\PYG{c+cp}{\PYGZsh{}define PIXY\PYGZus{}SYNC\PYGZus{}BYTE\PYGZus{}DATA         0x5b}
+\PYG{c+cp}{\PYGZsh{}define PIXY\PYGZus{}OUTBUF\PYGZus{}SIZE            6}
+
+\PYG{k}{class} \PYG{n+nc}{LinkI2C} \PYG{p}{\PYGZob{}}
+\PYG{k}{public}\PYG{o}{:}
+    \PYG{k+kt}{int} \PYG{n}{init}\PYG{p}{(}\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{addr}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{outLen} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{addr} \PYG{o}{=} \PYG{n}{addr}\PYG{p}{;}
+        \PYG{n}{fd} \PYG{o}{=} \PYG{n}{wiringPiI2CSetup}\PYG{p}{(}\PYG{n}{addr}\PYG{p}{);}
+        \PYG{k}{return} \PYG{n}{fd}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{getWord}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+        \PYG{c+c1}{// assume little endian}
+        \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{w}\PYG{p}{;}
+        \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{c}\PYG{p}{,} \PYG{n}{out} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{n}{c} \PYG{o}{=} \PYG{n}{getByte}\PYG{p}{();}
+        \PYG{n}{w} \PYG{o}{=} \PYG{n}{getByte}\PYG{p}{();}
+
+        \PYG{n}{w} \PYG{o}{\PYGZlt{}\PYGZlt{}=} \PYG{l+m+mi}{8}\PYG{p}{;}
+        \PYG{n}{w} \PYG{o}{|=} \PYG{n}{c}\PYG{p}{;}
+
+        \PYG{k}{return} \PYG{n}{w}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{getByte}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{n}{wiringPiI2CRead}\PYG{p}{(}\PYG{n}{fd}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k+kt}{int} \PYG{n}{getAddr}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+        \PYG{k}{return} \PYG{n}{addr}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+\PYG{k}{private}\PYG{o}{:}
+    \PYG{k+kt}{int} \PYG{n}{addr}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{fd}\PYG{p}{;}
+    \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{outBuf}\PYG{p}{[}\PYG{n}{PIXY\PYGZus{}OUTBUF\PYGZus{}SIZE}\PYG{p}{];}
+    \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{outLen}\PYG{p}{;}
+    \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{outIndex}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+
+\PYG{k}{typedef} \PYG{n}{TPixy}\PYG{o}{\PYGZlt{}}\PYG{n}{LinkI2C}\PYG{o}{\PYGZgt{}} \PYG{n}{Pixy}\PYG{p}{;}
+
+\PYG{c+cp}{\PYGZsh{}endif}
+\end{Verbatim}

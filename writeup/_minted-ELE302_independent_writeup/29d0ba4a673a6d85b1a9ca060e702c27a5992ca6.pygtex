@@ -1,0 +1,79 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/*\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}*/}
+\PYG{c+cm}{/* serial.c                                                        */}
+\PYG{c+cm}{/*                                                                 */}
+\PYG{c+cm}{/* BC Cho (bccho@) and TJ Smith (tjs8@)                            */}
+\PYG{c+cm}{/*\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}*/}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}serial.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}device.h\PYGZgt{}}
+
+\PYG{c+cm}{/*\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}*/}
+
+\PYG{c+cp}{\PYGZsh{}define BUF\PYGZus{}RX\PYGZus{}SIZE 100}
+\PYG{k}{static} \PYG{k+kt}{char} \PYG{n}{bufRx}\PYG{p}{[}\PYG{n}{BUF\PYGZus{}RX\PYGZus{}SIZE}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{bufRxPos} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{needReset} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+\PYG{c+cm}{/*\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}*/}
+
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{resetRx}\PYG{p}{();}
+
+\PYG{c+cm}{/*\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}*/}
+
+\PYG{c+cm}{/* Initializes serial communications */}
+\PYG{k+kt}{void} \PYG{n+nf}{Serial\PYGZus{}init}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{n}{resetRx}\PYG{p}{();}
+\PYG{p}{\PYGZcb{}}
+
+
+\PYG{c+cm}{/* Handles incoming serial data }
+\PYG{c+cm}{   Returns: null if transmission is not complete, the transmitted}
+\PYG{c+cm}{            string otherwise */}
+\PYG{k+kt}{char} \PYG{o}{*}\PYG{n+nf}{Serial\PYGZus{}handleData}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// reset the buffer if needed (last call completed a message)}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{needReset}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{resetRx}\PYG{p}{();}
+        \PYG{n}{needReset} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    
+    \PYG{k+kt}{char} \PYG{n}{recByte}\PYG{p}{;}
+    \PYG{k}{while} \PYG{p}{((}\PYG{n}{recByte} \PYG{o}{=} \PYG{n}{UART\PYGZus{}GetChar}\PYG{p}{())} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{c+c1}{// if NL, CR, or EOT, indicate end of message and echo back special char}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{recByte} \PYG{o}{==} \PYG{l+m+mh}{0xA} \PYG{o}{||} \PYG{n}{recByte} \PYG{o}{==} \PYG{l+m+mh}{0xD} \PYG{o}{||} \PYG{n}{recByte} \PYG{o}{==} \PYG{l+m+mh}{0x4}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{UART\PYGZus{}PutChar}\PYG{p}{(}\PYG{l+s+sc}{\PYGZsq{}\PYGZdl{}\PYGZsq{}}\PYG{p}{);}
+            \PYG{n}{UART\PYGZus{}PutChar}\PYG{p}{(}\PYG{n}{recByte}\PYG{p}{);}
+            \PYG{n}{needReset} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{c+c1}{//while (UART\PYGZus{}GetChar() \PYGZgt{} 0) \PYGZob{}\PYGZcb{}}
+            \PYG{n}{UART\PYGZus{}ClearRxBuffer}\PYG{p}{();}
+            \PYG{k}{return} \PYG{n}{bufRx}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// if we have reached max buffer size, indicate overflow error}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{bufRxPos} \PYG{o}{==} \PYG{n}{BUF\PYGZus{}RX\PYGZus{}SIZE}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}! Buffer Overflow !\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{needReset} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{k}{return} \PYG{n}{bufRx}\PYG{p}{;}
+        \PYG{c+c1}{// for normal bytes, put byte in buffer and echo the byte}
+        \PYG{p}{\PYGZcb{}} 
+        \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{bufRx}\PYG{p}{[}\PYG{n}{bufRxPos}\PYG{p}{]} \PYG{o}{=} \PYG{n}{recByte}\PYG{p}{;}
+            \PYG{n}{bufRxPos}\PYG{o}{++}\PYG{p}{;}
+            \PYG{n}{UART\PYGZus{}PutChar}\PYG{p}{(}\PYG{n}{recByte}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{return} \PYG{n+nb}{NULL}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+
+
+\PYG{c+cm}{/*\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}*/}
+
+
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{resetRx}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// Clear mesage buffer and reset position}
+    \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{;}
+    \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{bufRxPos}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{n}{bufRx}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{n}{bufRxPos} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* [] END OF FILE */}
+\end{Verbatim}

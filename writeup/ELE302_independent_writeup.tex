@@ -54,7 +54,7 @@ The aim of this project was to build a robot capable of playing basic ping pong.
     \item Determine (1) when it is the robot's turn to hit the ball and (2) when the ball will hit the net or leave the playing area
     \item Move the robot to the required location before the ball bounces twice and hit the ball back over the net
     \item Avoid leaving the playing field (area enclosed by table and net)
-\end{itemize}
+\end{enumerate}
 By Demo Day, we had implemented the hardware and software to achieve objectives 1, 3 and the first half of objective 2, and we had the capability of achieving the remainder of the objectives had we decided to implement them in software.
 
 We used two Pixy cameras (CMUcam5) placed a fixed distance apart on the robot to triangulate the location of a bright red ball in three-dimensional coordinates. Once the camera system had collected enough data points to accurately predict all future positions of the ball until the second bounce, the robot moved to a location where the ball would bounce to the center of a paddle attached to its side, and provided a brief flick to the paddle to return the ball.
@@ -274,7 +274,7 @@ The second complication with H-bridges is that if two transistors on the same si
 
 The chassis we used also had H-bridges that had already been built. The circuit diagram and board image is shown in \figref{fig:hb-circuit}. NMOS transistors are used on the ground side, and PMOS transistors are used on the power side. Each gate has an inline \SI{1.1}{\kilo\ohm} resistor to protect the PSoC from back EMF spikes. The left side gates are wired directly together, as are the right side gates. Given a low signal, then, the PMOS will turn on and the NMOS will turn off, connecting the motor terminal to power. Given a high signal, the PMOS will turn off and the NMOS will turn on, connecting the motor terminal to ground. Since we never want to motor to be floating (as that causes the back EMF to drop across the FET diodes), this arrangement works well.
 
-Since we are operating the motors at \SI{7.2}{\volts}, the PMOS transistors need an input close to that to turn off. The PSoC drives its outputs at \SI{3.3}{\volts} which is not nearly high enough to achieve this. The original design used open drain comparators with a threshold set at \SI{1.5}{\volts} to achieve the higher voltage. The \SI{750}{\ohm} pull-up resistors in the circuit diagram act as the pull-ups for the open-drain outputs. Since the PSoC has its own internally configurable open drain outputs, we simply used those to directly drive the H-bridges, eliminating the original comparators. The pull-up resistors also serve to connect both terminals of the motor to ground in the event of a PSoC failure, creating a safe failure condition.
+Since we are operating the motors at \SI{7.2}{\volt}, the PMOS transistors need an input close to that to turn off. The PSoC drives its outputs at \SI{3.3}{\volt} which is not nearly high enough to achieve this. The original design used open drain comparators with a threshold set at \SI{1.5}{\volt} to achieve the higher voltage. The \SI{750}{\ohm} pull-up resistors in the circuit diagram act as the pull-ups for the open-drain outputs. Since the PSoC has its own internally configurable open drain outputs, we simply used those to directly drive the H-bridges, eliminating the original comparators. The pull-up resistors also serve to connect both terminals of the motor to ground in the event of a PSoC failure, creating a safe failure condition.
 
 Gordon and Pfleger used lock anti-phase drive, and this influenced several of their H-bridge design decisions. Since the ``off'' time PWM signal is in reverse, the stop condition for the motors is a $50\%$, duty cycle, such that the motor is connected forwards half the time and backwards the other half of the time. According to their report, the first time they tried this, with a fairly standard \SI{100}{\hertz} PWM, they burned out two motors. To avoid burning out their motors, they had to increase their frequency to about \SI{10}{\kilo\hertz} This high frequency required making the pull-up resistors very small, to make the time constant of the transistors' gate capacitances low enough to allow them to actually turn on and off with the input signal. We believe that the main cause of their motors burning out was their choice of phase anti-lock drive. The frequency was high enough that the motors did not turn, as intended, but was also low enough that there was enough time for the current to reach full stall current in each direction, thereby burning out the motors.
 
@@ -713,62 +713,62 @@ All in all, we thoroughly enjoyed this experience, and we would like to thank Pr
 
 \subsection{Raspberry Pi: \texttt{pingpong.cpp}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{cpp}{files/rpi/pingpong.cpp}
+    \inputminted[breaklines]{cpp}{files/src/rpi/pingpong.cpp}
 \end{mdframed}
 
 \subsection{Raspberry Pi: \texttt{Pixy.h}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{cpp}{files/rpi/Pixy.h}
+    \inputminted[breaklines]{cpp}{files/src/rpi/Pixy.h}
 \end{mdframed}
 
 \subsection{Raspberry Pi: \texttt{TPixy.h}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{cpp}{files/rpi/TPixy.h}
+    \inputminted[breaklines]{cpp}{files/src/rpi/TPixy.h}
 \end{mdframed}
 
 \subsection{Raspberry Pi: \texttt{timer.h}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{cpp}{files/rpi/timer.h}
+    \inputminted[breaklines]{cpp}{files/src/rpi/timer.h}
 \end{mdframed}
 
 \subsection{PSoC: \texttt{main.c}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{c}{files/psoc/main.c}
+    \inputminted[breaklines]{c}{files/src/psoc/main.c}
 \end{mdframed}
 
 \subsection{PSoC: \texttt{hardware.h}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{c}{files/psoc/hardware.h}
+    \inputminted[breaklines]{c}{files/src/psoc/hardware.h}
 \end{mdframed}
 
 \subsection{PSoC: \texttt{accel.h}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{c}{files/psoc/accel.h}
+    \inputminted[breaklines]{c}{files/src/psoc/accel.h}
 \end{mdframed}
 
 \subsection{PSoC: \texttt{accel.c}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{c}{files/psoc/accel.c}
+    \inputminted[breaklines]{c}{files/src/psoc/accel.c}
 \end{mdframed}
 
 \subsection{PSoC: \texttt{serial.h}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{c}{files/psoc/serial.h}
+    \inputminted[breaklines]{c}{files/src/psoc/serial.h}
 \end{mdframed}
 
 \subsection{PSoC: \texttt{serial.c}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{c}{files/psoc/serial.c}
+    \inputminted[breaklines]{c}{files/src/psoc/serial.c}
 \end{mdframed}
 
 \subsection{PSoC: \texttt{serial\_pi.h}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{c}{files/psoc/serial_pi.h}
+    \inputminted[breaklines]{c}{files/src/psoc/serial_pi.h}
 \end{mdframed}
 
 \subsection{PSoC: \texttt{serial\_pi.c}}
 \begin{mdframed}[backgroundcolor=bg]
-    \inputminted[breaklines]{c}{files/psoc/serial_pi.c}
+    \inputminted[breaklines]{c}{files/src/psoc/serial_pi.c}
 \end{mdframed}
 
 \end{document}

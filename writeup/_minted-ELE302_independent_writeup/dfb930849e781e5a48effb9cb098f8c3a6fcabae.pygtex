@@ -1,0 +1,742 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/*\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}*/}
+\PYG{c+cm}{/* main.c                                                          */}
+\PYG{c+cm}{/*                                                                 */}
+\PYG{c+cm}{/* BC Cho (bccho@) and TJ Smith (tjs8@)                            */}
+\PYG{c+cm}{/*\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}*/}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}device.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}hardware.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}serial.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}serial\PYGZus{}pi.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}accel.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdio.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}math.h\PYGZgt{}}
+
+\PYG{k}{static} \PYG{k+kt}{char} \PYG{n}{buildVersion}\PYG{p}{[]} \PYG{o}{=} \PYG{l+s}{\PYGZdq{}Build 1.0.0\PYGZdq{}}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{char} \PYG{n}{strbuffer}\PYG{p}{[}\PYG{l+m+mi}{100}\PYG{p}{];}
+
+
+\PYG{c+cp}{\PYGZsh{}define X\PYGZus{}DIST 60}
+\PYG{c+cp}{\PYGZsh{}define Y\PYGZus{}DIST 65}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{alphaAccelCorrect}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{rAccelCorrect}\PYG{p}{;}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{rxInterrupted} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{rxPiInterrupted} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{refreshInterrupted} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{terminal} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+\PYG{c+cp}{\PYGZsh{}define ACCEL\PYGZus{}READ\PYGZus{}PERIOD 0.01}
+\PYG{c+cp}{\PYGZsh{}define PADDLE\PYGZus{}MIN\PYGZus{}CMP 60}\PYG{c+c1}{//100}
+\PYG{c+cp}{\PYGZsh{}define PADDLE\PYGZus{}MAX\PYGZus{}CMP 240}\PYG{c+c1}{//200}
+
+\PYG{c+c1}{// Function prototypes}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{parseMessage}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{message}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{driveMagPhase}\PYG{p}{(}\PYG{k+kt}{double} \PYG{n}{direction}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{magnitude}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{angleMag}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{currentAngle}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{drive}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{dirs}\PYG{p}{[],} \PYG{k+kt}{double} \PYG{n}{mags}\PYG{p}{[]);}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{];}
+
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{currentAngle}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{currentPos}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{currentVelocity}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{];}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{accelTestVal} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{heading} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{magnitude} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{enableGyro} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{goToTarget} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}               
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{target}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{targetMargin} \PYG{o}{=} \PYG{l+m+mi}{100}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{targetTime} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{timeElapsed} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{oldCounterVal} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{accelerationLimitEnabled} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{accelLimit} \PYG{o}{=} \PYG{l+m+mf}{0.03}\PYG{p}{;}
+
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{P} \PYG{o}{=} \PYG{l+m+mf}{0.01}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{flickTime} \PYG{o}{=} \PYG{l+m+mf}{0.1}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{rotOn}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{rotDone}\PYG{p}{;}
+
+\PYG{c+cm}{/*}
+\PYG{c+cm}{ * parseMessage()}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Parse serial input string and act on it}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Inputs: message}
+\PYG{c+cm}{ * Returns: none}
+\PYG{c+cm}{ */}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{parseMessage}\PYG{p}{(}\PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{message}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{message} \PYG{o}{==} \PYG{n+nb}{NULL}\PYG{p}{)} \PYG{k}{return}\PYG{p}{;}
+    
+    \PYG{k+kt}{char} \PYG{n}{msgPrefix}\PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{];}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}4[A\PYGZhy{}Za\PYGZhy{}z]\PYGZdq{}}\PYG{p}{,} \PYG{n}{msgPrefix}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{prefixLen} \PYG{o}{=} \PYG{n}{strlen}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{);}
+        
+        \PYG{c+c1}{// Messages of the form \PYGZdq{}CTx.y\PYGZdq{} (x integer, y float) set motor x to throttle y}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}CT\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{double} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message} \PYG{o}{+} \PYG{n}{prefixLen}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{value}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{k+kt}{int} \PYG{n}{motorNum} \PYG{o}{=} \PYG{n}{floor}\PYG{p}{(}\PYG{n}{fabs}\PYG{p}{(}\PYG{n}{value}\PYG{p}{));}
+                \PYG{k+kt}{double} \PYG{n}{throttleMag} \PYG{o}{=} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{value}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{motorNum}\PYG{p}{;}
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{throttleMag} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{throttleMag} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{throttleMag} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{throttleMag} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{k+kt}{int} \PYG{n}{throttleDir} \PYG{o}{=} \PYG{n}{value} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{l+m+mi}{1} \PYG{o}{:} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{k}{switch} \PYG{p}{(}\PYG{n}{motorNum}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{k}{case} \PYG{l+m+mi}{0}\PYG{o}{:}
+                        \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Left\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{throttleMag} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Left\PYGZus{}ReadPeriod}\PYG{p}{());}
+                        \PYG{k}{break}\PYG{p}{;}
+                    \PYG{k}{case} \PYG{l+m+mi}{1}\PYG{o}{:}
+                        \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Right\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{throttleMag} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Right\PYGZus{}ReadPeriod}\PYG{p}{());}
+                        \PYG{k}{break}\PYG{p}{;}
+                    \PYG{k}{case} \PYG{l+m+mi}{2}\PYG{o}{:}
+                        \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Left\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{throttleMag} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Left\PYGZus{}ReadPeriod}\PYG{p}{());}
+                        \PYG{k}{break}\PYG{p}{;}
+                    \PYG{k}{case} \PYG{l+m+mi}{3}\PYG{o}{:}
+                        \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Right\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{throttleMag} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Right\PYGZus{}ReadPeriod}\PYG{p}{());}
+                        \PYG{k}{break}\PYG{p}{;}
+                \PYG{p}{\PYGZcb{}}
+                \PYG{k+kt}{int} \PYG{n}{regVal} \PYG{o}{=} \PYG{n}{Control\PYGZus{}Reg\PYGZus{}Direction\PYGZus{}Read}\PYG{p}{();}
+                \PYG{k+kt}{int} \PYG{n}{newRegVal} \PYG{o}{=} \PYG{p}{(}\PYG{n}{regVal} \PYG{o}{\PYGZam{}} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{motorNum}\PYG{p}{))} \PYG{o}{|} \PYG{p}{(}\PYG{n}{throttleDir} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{motorNum}\PYG{p}{);}
+                \PYG{n}{Control\PYGZus{}Reg\PYGZus{}Direction\PYGZus{}Write}\PYG{p}{(}\PYG{n}{newRegVal}\PYG{p}{);}
+                \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Motor Num: \PYGZpc{}d, Throttle Mag: \PYGZpc{}f, Throttle Dir: \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{motorNum}\PYG{p}{,} \PYG{n}{throttleMag}\PYG{p}{,} \PYG{n}{throttleDir}\PYG{p}{);}
+                \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+                \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Old Reg Val: \PYGZpc{}d, New Reg Val: \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{regVal}\PYG{p}{,} \PYG{n}{newRegVal}\PYG{p}{);}
+                \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);} 
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Messages of the form \PYGZdq{}CPx\PYGZdq{} (x integer) set PWM to period x}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}CP\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{int} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message} \PYG{o}{+} \PYG{n}{prefixLen}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}d\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{value}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{value} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{100000}\PYG{p}{)} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{100000}\PYG{p}{;}
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{value} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Left\PYGZus{}WritePeriod}\PYG{p}{(}\PYG{n}{value}\PYG{p}{);}
+                \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Right\PYGZus{}WritePeriod}\PYG{p}{(}\PYG{n}{value}\PYG{p}{);}
+                \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Left\PYGZus{}WritePeriod}\PYG{p}{(}\PYG{n}{value}\PYG{p}{);}
+                \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Right\PYGZus{}WritePeriod}\PYG{p}{(}\PYG{n}{value}\PYG{p}{);}
+                
+                \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}New Period: \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{value}\PYG{p}{);}
+                \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Drive forward}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}w\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{heading} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}Driving Forward}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// Drive backward}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}s\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{heading} \PYG{o}{=} \PYG{n}{M\PYGZus{}PI}\PYG{p}{;}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Driving Backward}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// Drive left}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}a\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{heading} \PYG{o}{=} \PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{;}  
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Driving Left}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// Drive right}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}d\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{heading} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{;} 
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Driving Right}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// Stop}
+        \PYG{k}{if} \PYG{p}{((}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}q\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{||} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Q\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{))} \PYG{p}{\PYGZob{}}
+            \PYG{n}{magnitude} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{goToTarget} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Stopped}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// Rotate Right}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}c\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{rotation} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{0.5}\PYG{p}{;}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Rotating Right Enabled}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// Rotate Left}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}z\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mf}{0.5}\PYG{p}{;}    
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Rotating Left Enabled}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// Stop Rotation}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}x\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}    
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Rotating Disabled}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Enable Gyro}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}EG\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{enableGyro} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}    
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Gyro Enabled}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// Disable Gyro}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}DG\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{enableGyro} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}    
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Gyro Disabled}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Arbitrary direction}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}p\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{driveMagPhase}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mf}{0.5}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{0.3}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}    
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Arbitrary}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Change Magnitude}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}CM\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{double} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message} \PYG{o}{+} \PYG{n}{prefixLen}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{value}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{magnitude} \PYG{o}{=} \PYG{n}{value}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Changed magnitude to \PYGZpc{}f}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{magnitude}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Change Rotation}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}CR\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{double} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message} \PYG{o}{+} \PYG{n}{prefixLen}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{value}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{rotation} \PYG{o}{=} \PYG{n}{value}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Changed rotation to \PYGZpc{}f}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{rotation}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Change Heading}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}CH\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{double} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message} \PYG{o}{+} \PYG{n}{prefixLen}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{value}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{heading} \PYG{o}{=} \PYG{n}{value}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Changed heading to \PYGZpc{}f}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{heading}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Accel Test}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}AT\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{int} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message} \PYG{o}{+} \PYG{n}{prefixLen}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}d\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{value}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{accelTestVal} \PYG{o}{=} \PYG{n}{value}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Accel Test}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Reset}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}R\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{currentAngle} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{currentPos}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{currentPos}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{currentVelocity}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{currentVelocity}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Reset Inertial Tracking}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Go to pos}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}GO\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{double} \PYG{n}{x}\PYG{p}{,}\PYG{n}{y}\PYG{p}{,} \PYG{n}{t}\PYG{p}{,} \PYG{n}{angle}\PYG{p}{;}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message} \PYG{o}{+} \PYG{n}{prefixLen}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}(\PYGZpc{}lf, \PYGZpc{}lf, \PYGZpc{}lf, \PYGZpc{}lf)\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{x}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{y}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{t}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{angle}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{currentAngle} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{n}{currentPos}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{n}{currentPos}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{n}{currentVelocity}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{n}{currentVelocity}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{n}{targetTime} \PYG{o}{=} \PYG{n}{t}\PYG{p}{;}
+                \PYG{n}{timeElapsed} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                
+                \PYG{n}{goToTarget} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+                
+                \PYG{n}{target}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{n}{x}\PYG{p}{;}
+                \PYG{n}{target}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{y}\PYG{p}{;}
+                
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{angle} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{angle} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{angle} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{n}{PWM\PYGZus{}Servo\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{PADDLE\PYGZus{}MIN\PYGZus{}CMP} \PYG{o}{+} \PYG{n}{angle} \PYG{o}{*} \PYG{p}{(}\PYG{n}{PADDLE\PYGZus{}MAX\PYGZus{}CMP} \PYG{o}{\PYGZhy{}} \PYG{n}{PADDLE\PYGZus{}MIN\PYGZus{}CMP}\PYG{p}{));}
+                
+                \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}X: \PYGZpc{}f, Y: \PYGZpc{}f}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{);}
+                \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Change Target Margin}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}CTM\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{double} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message} \PYG{o}{+} \PYG{n}{prefixLen}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{value}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{targetMargin} \PYG{o}{=} \PYG{n}{value}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Target Margin: \PYGZpc{}fmm}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{targetMargin}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Print vals}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}P\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Angle: \PYGZpc{}8.3f, Px: \PYGZpc{}8.3f, Py: \PYGZpc{}8.3f}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} 
+                        \PYG{n}{currentAngle}\PYG{p}{,} \PYG{n}{currentPos}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{currentPos}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Enable Accel Limit}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}EAL\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{accelerationLimitEnabled} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}    
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Acceleration Limit Enabled}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// Disable Accel Limit}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}DAL\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{accelerationLimitEnabled} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}    
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Acceleration Limit Disabled}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// Set Accel Limit}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}SAL\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{double} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message} \PYG{o}{+} \PYG{n}{prefixLen}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{value}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{accelLimit} \PYG{o}{=} \PYG{n}{value}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Accel Limit: \PYGZpc{}fmm}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{accelLimit}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Set P}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}SP\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{double} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message} \PYG{o}{+} \PYG{n}{prefixLen}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{value}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{P} \PYG{o}{=} \PYG{n}{value}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}P: \PYGZpc{}f}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{P}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Set Flick Time}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{strcmp}\PYG{p}{(}\PYG{n}{msgPrefix}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}SFT\PYGZdq{}}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{double} \PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{sscanf}\PYG{p}{(}\PYG{n}{message} \PYG{o}{+} \PYG{n}{prefixLen}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}\PYGZpc{}lf\PYGZdq{}}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{value}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{flickTime} \PYG{o}{=} \PYG{n}{value}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Flick Time: \PYGZpc{}fs}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{flickTime}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+c1}{// 0 deg is forward, 90 is left. magnitude is from 0 to 1}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{driveMagPhaseOld}\PYG{p}{(}\PYG{k+kt}{double} \PYG{n}{direction}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{magnitude}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// angle w.r.t the axis formed by the front right and back left wheels}
+    \PYG{k+kt}{double} \PYG{n}{angle} \PYG{o}{=} \PYG{n}{direction} \PYG{o}{*} \PYG{p}{(}\PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{180}\PYG{p}{)} \PYG{o}{+} \PYG{p}{(}\PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{4}\PYG{p}{);}
+    \PYG{c+c1}{// ratio of front left and back right wheel power to front right and back left wheel power}
+    \PYG{k+kt}{double} \PYG{n}{forceRatio} \PYG{o}{=} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{tan}\PYG{p}{(}\PYG{n}{angle}\PYG{p}{));}
+    
+    \PYG{c+c1}{// mag1 is front left and back right wheel power}
+    \PYG{c+c1}{// mag2 is front right and back left wheel power}
+    \PYG{k+kt}{double} \PYG{n}{mag1}\PYG{p}{,} \PYG{n}{mag2}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{forceRatio} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{mag2} \PYG{o}{=} \PYG{n}{magnitude}\PYG{p}{;}
+        \PYG{n}{mag1} \PYG{o}{=} \PYG{n}{mag2} \PYG{o}{/} \PYG{n}{forceRatio}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} 
+    \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{n}{mag1} \PYG{o}{=} \PYG{n}{magnitude}\PYG{p}{;}
+        \PYG{n}{mag2} \PYG{o}{=} \PYG{n}{mag1} \PYG{o}{*} \PYG{n}{forceRatio}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    
+    \PYG{k+kt}{int} \PYG{n}{dir1} \PYG{o}{=} \PYG{p}{(}\PYG{n}{angle} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{||} \PYG{p}{(}\PYG{n}{angle} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{3}\PYG{o}{*}\PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{2} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{M\PYGZus{}PI}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{1} \PYG{o}{:} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{dir2} \PYG{o}{=} \PYG{p}{(}\PYG{n}{angle} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{n}{M\PYGZus{}PI}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{1} \PYG{o}{:} \PYG{l+m+mi}{0}\PYG{p}{;}
+    
+    \PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{n}{dir1}\PYG{p}{;} \PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{dir2}\PYG{p}{;} \PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{dir2}\PYG{p}{;} \PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{]} \PYG{o}{=} \PYG{n}{dir1}\PYG{p}{;}
+    \PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{n}{mag1}\PYG{p}{;} \PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{mag2}\PYG{p}{;} \PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{mag2}\PYG{p}{;} \PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{]} \PYG{o}{=} \PYG{n}{mag1}\PYG{p}{;}
+    
+    \PYG{n}{drive}\PYG{p}{(}\PYG{n}{dirs}\PYG{p}{,} \PYG{n}{mags}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+
+
+\PYG{c+c1}{// direction and current angle are CCW w.r.t global forward (in rads), }
+\PYG{c+c1}{// magnitude is from 0 to 1, angleMag is CCW}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{driveMagPhase}\PYG{p}{(}\PYG{k+kt}{double} \PYG{n}{direction}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{magnitude}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{angleMag}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{currentAngle}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// angle of drive CCW w.r.t the axis formed by the front right and back left wheels}
+    \PYG{k+kt}{double} \PYG{n}{angle} \PYG{o}{=} \PYG{n}{fmod}\PYG{p}{(}\PYG{n}{direction} \PYG{o}{\PYGZhy{}} \PYG{n}{currentAngle} \PYG{o}{+} \PYG{p}{(}\PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{4}\PYG{p}{),} \PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{M\PYGZus{}PI}\PYG{p}{);}
+    \PYG{n}{angle} \PYG{o}{=} \PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{angle} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n+nl}{M\PYGZus{}PI} \PYG{p}{:} \PYG{n}{angle}\PYG{p}{;}
+\PYG{c+c1}{//    sprintf(strbuffer, \PYGZdq{}angle: \PYGZpc{}f\PYGZbs{}n\PYGZdq{}, angle);}
+\PYG{c+c1}{//    UART\PYGZus{}PutString(strbuffer);}
+    
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{angleMag} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{angleMag} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{angleMag} \PYG{o}{\PYGZlt{}} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{angleMag} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{magnitude} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{magnitude} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{magnitude} \PYG{o}{\PYGZlt{}} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{magnitude} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+    
+    \PYG{c+c1}{// 1 is dominant, 0 is non\PYGZhy{}dominant, motor 4 is lsb}
+    \PYG{n}{uint8} \PYG{n}{dirDominant} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{fabs}\PYG{p}{(}\PYG{n}{tan}\PYG{p}{(}\PYG{n}{angle}\PYG{p}{))} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{dirDominant} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{n}{b0101}\PYG{p}{;}
+    \PYG{k}{else} \PYG{n}{dirDominant} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{n}{b1010}\PYG{p}{;}
+    
+    \PYG{c+c1}{// 0 is backward, 1 is forward}
+    \PYG{n}{uint8} \PYG{n}{directionChangeDir} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{((}\PYG{n}{angle} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{||} \PYG{p}{(}\PYG{n}{angle} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{3}\PYG{o}{*}\PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{2} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{M\PYGZus{}PI}\PYG{p}{))} \PYG{n}{directionChangeDir} \PYG{o}{|=} \PYG{l+m+mi}{0}\PYG{n}{b1010}\PYG{p}{;}
+    \PYG{k}{else} \PYG{n}{directionChangeDir} \PYG{o}{\PYGZam{}=} \PYG{l+m+mi}{0}\PYG{n}{b0101}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{angle} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{n}{M\PYGZus{}PI}\PYG{p}{)} \PYG{n}{directionChangeDir} \PYG{o}{|=} \PYG{l+m+mi}{0}\PYG{n}{b0101}\PYG{p}{;}
+    \PYG{k}{else} \PYG{n}{directionChangeDir} \PYG{o}{\PYGZam{}=} \PYG{l+m+mi}{0}\PYG{n}{b1010}\PYG{p}{;}
+    
+\PYG{c+c1}{//    sprintf(strbuffer, \PYGZdq{}directionChangeDir: \PYGZpc{}x\PYGZbs{}n\PYGZdq{}, directionChangeDir);}
+\PYG{c+c1}{//    UART\PYGZus{}PutString(strbuffer);}
+    
+    
+    \PYG{c+c1}{// 0 is backward, 1 is forward}
+    \PYG{n}{uint8} \PYG{n}{angleChangeDir} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{angleMag} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{angleChangeDir} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{n}{b0110}\PYG{p}{;}
+    \PYG{k}{else} \PYG{n}{angleChangeDir} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{n}{b1001}\PYG{p}{;}
+    
+\PYG{c+c1}{//    sprintf(strbuffer, \PYGZdq{}angleChangeDir: \PYGZpc{}x\PYGZbs{}n\PYGZdq{}, angleChangeDir);}
+\PYG{c+c1}{//    UART\PYGZus{}PutString(strbuffer);}
+    
+    \PYG{c+c1}{// 1 is dominant, 0 is non\PYGZhy{}dominant}
+    \PYG{n}{uint8} \PYG{n}{angleDominant} \PYG{o}{=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{n}{directionChangeDir} \PYG{o}{\PYGZca{}} \PYG{n}{angleChangeDir}\PYG{p}{);}
+    \PYG{n}{uint8} \PYG{n}{dominant} \PYG{o}{=} \PYG{n}{dirDominant} \PYG{o}{\PYGZam{}} \PYG{n}{angleDominant}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{dominantNum} \PYG{o}{=} \PYG{p}{(}\PYG{n}{dominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{8}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{0} \PYG{o}{:} \PYG{p}{(}\PYG{n}{dominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{4}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{1} \PYG{o}{:} \PYG{p}{(}\PYG{n}{dominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{2} \PYG{o}{:} \PYG{l+m+mi}{3}\PYG{p}{;}
+    \PYG{n}{uint8} \PYG{n}{offDominant} \PYG{o}{=} \PYG{o}{\PYGZti{}}\PYG{n}{dirDominant} \PYG{o}{\PYGZam{}} \PYG{n}{angleDominant}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{offDominantNum} \PYG{o}{=} \PYG{p}{(}\PYG{n}{offDominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{8}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{0} \PYG{o}{:} \PYG{p}{(}\PYG{n}{offDominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{4}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{1} \PYG{o}{:} \PYG{p}{(}\PYG{n}{offDominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{2} \PYG{o}{:} \PYG{l+m+mi}{3}\PYG{p}{;}
+    
+\PYG{c+c1}{//    sprintf(strbuffer, \PYGZdq{}angleDominant: \PYGZpc{}x\PYGZbs{}n\PYGZdq{}, angleDominant);}
+\PYG{c+c1}{//    UART\PYGZus{}PutString(strbuffer);}
+\PYG{c+c1}{//    sprintf(strbuffer, \PYGZdq{}dominant: \PYGZpc{}x\PYGZbs{}n\PYGZdq{}, dominant);}
+\PYG{c+c1}{//    UART\PYGZus{}PutString(strbuffer);}
+\PYG{c+c1}{//    sprintf(strbuffer, \PYGZdq{}offDominant: \PYGZpc{}x\PYGZbs{}n\PYGZdq{}, offDominant);}
+\PYG{c+c1}{//    UART\PYGZus{}PutString(strbuffer);}
+\PYG{c+c1}{//    }
+\PYG{c+c1}{//    sprintf(strbuffer, \PYGZdq{}Dom: \PYGZpc{}d, DomP: \PYGZpc{}d, OffDom: \PYGZpc{}d, OffDomP: \PYGZpc{}2d\PYGZbs{}n\PYGZdq{}, }
+\PYG{c+c1}{//            dominantNum, (dominantNum + 2) \PYGZpc{} 4, offDominantNum, (offDominantNum + 2) \PYGZpc{} 4);}
+\PYG{c+c1}{//    UART\PYGZus{}PutString(strbuffer);}
+    
+    \PYG{c+c1}{// Calculate mags}
+    \PYG{k+kt}{double} \PYG{n}{domMag} \PYG{o}{=} \PYG{p}{(}\PYG{n}{magnitude} \PYG{o}{+} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{));}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{domMag} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{angleMag} \PYG{o}{/=} \PYG{n}{domMag}\PYG{p}{;}
+        \PYG{n}{domMag} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k+kt}{double} \PYG{n}{domPartnerMag} \PYG{o}{=} \PYG{n}{domMag} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{);}
+    \PYG{k+kt}{double} \PYG{n}{offMultiplier} \PYG{o}{=} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{tan}\PYG{p}{(}\PYG{n}{angle}\PYG{p}{));}
+    \PYG{n}{offMultiplier} \PYG{o}{=} \PYG{n}{offMultiplier} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1} \PYG{o}{?} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{/}\PYG{n}{offMultiplier}\PYG{p}{)} \PYG{o}{:} \PYG{n}{offMultiplier}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{offDomMag} \PYG{o}{=} \PYG{p}{(}\PYG{n}{domMag} \PYG{o}{\PYGZhy{}} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{))} \PYG{o}{*} \PYG{n}{offMultiplier} \PYG{o}{+} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{);}
+    \PYG{k+kt}{double} \PYG{n}{offDomPartnerMag} \PYG{o}{=} \PYG{p}{(}\PYG{n}{domMag} \PYG{o}{\PYGZhy{}} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{))} \PYG{o}{*} \PYG{n}{offMultiplier} \PYG{o}{\PYGZhy{}} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{);}
+    
+    \PYG{c+c1}{// Assign mags}
+    \PYG{k+kt}{double} \PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{];}
+    \PYG{n}{mags}\PYG{p}{[}\PYG{n}{dominantNum}\PYG{p}{]} \PYG{o}{=} \PYG{n}{domMag}\PYG{p}{;}
+    \PYG{n}{mags}\PYG{p}{[(}\PYG{n}{dominantNum} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{=} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{domPartnerMag}\PYG{p}{);}
+    \PYG{n}{mags}\PYG{p}{[}\PYG{n}{offDominantNum}\PYG{p}{]} \PYG{o}{=} \PYG{n}{offDomMag}\PYG{p}{;}
+    \PYG{n}{mags}\PYG{p}{[(}\PYG{n}{offDominantNum} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{=} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{offDomPartnerMag}\PYG{p}{);}
+\PYG{c+c1}{//    sprintf(strbuffer, \PYGZdq{}Mags: \PYGZpc{}4.3f, \PYGZpc{}4.3f, \PYGZpc{}4.3f, \PYGZpc{}4.3f\PYGZbs{}n\PYGZdq{}, mags[0], mags[1], mags[2], mags[3]);}
+\PYG{c+c1}{//    UART\PYGZus{}PutString(strbuffer);}
+    
+    \PYG{c+c1}{// Find dirs}
+    \PYG{k+kt}{int} \PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{];}
+    \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{dominantNum}\PYG{p}{]} \PYG{o}{=} \PYG{p}{((}\PYG{n}{dominant} \PYG{o}{\PYGZam{}} \PYG{n}{directionChangeDir}\PYG{p}{)} \PYG{o}{!=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{1} \PYG{o}{:} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{offDominantNum}\PYG{p}{]} \PYG{o}{=} \PYG{p}{((}\PYG{n}{offDominant} \PYG{o}{\PYGZam{}} \PYG{n}{directionChangeDir}\PYG{p}{)} \PYG{o}{!=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{1} \PYG{o}{:} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{n}{dirs}\PYG{p}{[(}\PYG{n}{dominantNum} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{=} \PYG{n}{domPartnerMag} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{dominantNum}\PYG{p}{]} \PYG{o}{:} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{dominantNum}\PYG{p}{];}
+    \PYG{n}{dirs}\PYG{p}{[(}\PYG{n}{offDominantNum} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{=} \PYG{n}{offDomPartnerMag} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{offDominantNum}\PYG{p}{]} \PYG{o}{:} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{offDominantNum}\PYG{p}{];}
+\PYG{c+c1}{//    sprintf(strbuffer, \PYGZdq{}Dirs: \PYGZpc{}2d, \PYGZpc{}2d, \PYGZpc{}2d, \PYGZpc{}2d\PYGZbs{}n\PYGZdq{}, dirs[0], dirs[1], dirs[2], dirs[3]);}
+\PYG{c+c1}{//    UART\PYGZus{}PutString(strbuffer);}
+    
+    \PYG{n}{drive}\PYG{p}{(}\PYG{n}{dirs}\PYG{p}{,} \PYG{n}{mags}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+    
+
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{drive}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{dirs}\PYG{p}{[],} \PYG{k+kt}{double} \PYG{n}{mags}\PYG{p}{[])} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{;}
+    \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{mags}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{mags}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{dirs}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{!=} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{!=} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    
+    \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Left\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Left\PYGZus{}ReadPeriod}\PYG{p}{());}
+    \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Right\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Right\PYGZus{}ReadPeriod}\PYG{p}{());}
+    \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Left\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{]} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Left\PYGZus{}ReadPeriod}\PYG{p}{());}
+    \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Right\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Right\PYGZus{}ReadPeriod}\PYG{p}{());}
+    
+    \PYG{k+kt}{int} \PYG{n}{regVal} \PYG{o}{=} \PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{|} \PYG{p}{(}\PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{|} \PYG{p}{(}\PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{]} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{|} \PYG{p}{(}\PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{);}
+    \PYG{n}{Control\PYGZus{}Reg\PYGZus{}Direction\PYGZus{}Write}\PYG{p}{(}\PYG{n}{regVal}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Received data interrupt */}
+\PYG{n}{CY\PYGZus{}ISR}\PYG{p}{(}\PYG{n}{rx\PYGZus{}ISR}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{n}{rxInterrupted} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Received data interrupt pi */}
+\PYG{n}{CY\PYGZus{}ISR}\PYG{p}{(}\PYG{n}{rx\PYGZus{}pi\PYGZus{}ISR}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{n}{rxPiInterrupted} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Refresh timer interrupt */}
+\PYG{n}{CY\PYGZus{}ISR}\PYG{p}{(}\PYG{n}{refresh\PYGZus{}ISR}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+\PYG{c+c1}{//    if (refreshInterrupted != 0) UART\PYGZus{}PutString(\PYGZdq{}M\PYGZbs{}n\PYGZdq{});}
+\PYG{c+c1}{//    else UART\PYGZus{}PutString(\PYGZdq{}H\PYGZbs{}n\PYGZdq{});}
+    \PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{count}\PYG{p}{;}
+    \PYG{n}{count}\PYG{o}{++}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{count} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{10}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{refreshInterrupted} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+        \PYG{n}{count} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+
+\PYG{k+kt}{void} \PYG{n}{main}\PYG{p}{()}
+\PYG{p}{\PYGZob{}}
+    \PYG{c+cm}{/* Initialization */}
+    \PYG{n}{CyGlobalIntEnable}\PYG{p}{;} \PYG{c+c1}{// Enable global interrupts}
+    
+    \PYG{c+c1}{// Start LCD}
+    \PYG{n}{LCD\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{LCD\PYGZus{}PrintString}\PYG{p}{(}\PYG{n}{buildVersion}\PYG{p}{);}
+    
+    \PYG{c+c1}{// Start UART}
+    \PYG{n}{UART\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{rx\PYGZus{}rcvd\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{rx\PYGZus{}rcvd\PYGZus{}SetVector}\PYG{p}{(}\PYG{n}{rx\PYGZus{}ISR}\PYG{p}{);}
+    
+    \PYG{c+c1}{// Start Pi UART}
+    \PYG{n}{UART\PYGZus{}Pi\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{rx\PYGZus{}rcvd\PYGZus{}pi\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{rx\PYGZus{}rcvd\PYGZus{}pi\PYGZus{}SetVector}\PYG{p}{(}\PYG{n}{rx\PYGZus{}pi\PYGZus{}ISR}\PYG{p}{);}
+    
+    \PYG{c+c1}{// Start refresh interrupt}
+    \PYG{n}{Counter\PYGZus{}Refresh\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{refresh\PYGZus{}interrupt\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{refresh\PYGZus{}interrupt\PYGZus{}SetVector}\PYG{p}{(}\PYG{n}{refresh\PYGZus{}ISR}\PYG{p}{);}
+    
+    \PYG{c+c1}{// Start Motors}
+    \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Left\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Right\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Left\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Right\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{UART\PYGZus{}Start}\PYG{p}{();}
+    
+    \PYG{c+c1}{// Init serial}
+    \PYG{n}{Serial\PYGZus{}init}\PYG{p}{();}
+    \PYG{n}{Serial\PYGZus{}Pi\PYGZus{}init}\PYG{p}{();}
+    
+    \PYG{c+c1}{// Start I2C}
+    \PYG{n}{I2C\PYGZus{}Start}\PYG{p}{();}
+    
+    \PYG{c+c1}{// Init accelerometer}
+    \PYG{n}{Accel\PYGZus{}init}\PYG{p}{();}
+    
+    \PYG{n}{alphaAccelCorrect} \PYG{o}{=} \PYG{n}{atan}\PYG{p}{(}\PYG{n}{X\PYGZus{}DIST}\PYG{o}{/}\PYG{n}{Y\PYGZus{}DIST}\PYG{p}{);}
+    \PYG{n}{rAccelCorrect} \PYG{o}{=} \PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{X\PYGZus{}DIST}\PYG{o}{*}\PYG{n}{X\PYGZus{}DIST} \PYG{o}{+} \PYG{n}{Y\PYGZus{}DIST}\PYG{o}{*}\PYG{n}{Y\PYGZus{}DIST}\PYG{p}{);}
+    
+    \PYG{n}{PWM\PYGZus{}Servo\PYGZus{}Start}\PYG{p}{();}
+    \PYG{n}{PWM\PYGZus{}Servo\PYGZus{}WriteCompare}\PYG{p}{((}\PYG{n}{PADDLE\PYGZus{}MIN\PYGZus{}CMP} \PYG{o}{+} \PYG{n}{PADDLE\PYGZus{}MAX\PYGZus{}CMP}\PYG{p}{)} \PYG{o}{/} \PYG{l+m+mi}{2}\PYG{p}{);}
+    
+    \PYG{n}{Counter\PYGZus{}Time\PYGZus{}Start}\PYG{p}{();}
+
+    \PYG{k}{for}\PYG{p}{(;;)}
+    \PYG{p}{\PYGZob{}}
+       \PYG{c+c1}{// Handle incoming serial data}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{rxInterrupted}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{message} \PYG{o}{=} \PYG{n}{Serial\PYGZus{}handleData}\PYG{p}{();}
+            \PYG{n}{parseMessage}\PYG{p}{(}\PYG{n}{message}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{rxInterrupted} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Handle incoming pi serial data}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{rxPiInterrupted}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{message} \PYG{o}{=} \PYG{n}{Serial\PYGZus{}Pi\PYGZus{}handleData}\PYG{p}{();}
+            \PYG{n}{parseMessage}\PYG{p}{(}\PYG{n}{message}\PYG{p}{);}
+            \PYG{n}{terminal} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            \PYG{n}{rxPiInterrupted} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Handle refresh timer}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{refreshInterrupted}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+
+            \PYG{n}{Accel\PYGZus{}refresh}\PYG{p}{();}
+            
+            \PYG{k+kt}{double} \PYG{n}{accelVals}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{];}
+            \PYG{k+kt}{double} \PYG{n}{gyroVals}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{];}
+            \PYG{k+kt}{double} \PYG{n}{magVals}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{];}
+            \PYG{n}{Accel\PYGZus{}getAccel}\PYG{p}{(}\PYG{n}{accelVals}\PYG{p}{);}
+            \PYG{n}{Accel\PYGZus{}getGyro}\PYG{p}{(}\PYG{n}{gyroVals}\PYG{p}{);}
+            \PYG{n}{Accel\PYGZus{}getMag}\PYG{p}{(}\PYG{n}{magVals}\PYG{p}{);}
+            
+            \PYG{c+c1}{// Integrate angular velocity to get angle}
+            \PYG{n}{currentAngle} \PYG{o}{+=} \PYG{n}{gyroVals}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{n}{ACCEL\PYGZus{}READ\PYGZus{}PERIOD} \PYG{o}{*} \PYG{p}{(}\PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{180}\PYG{p}{);}
+            
+            \PYG{c+c1}{// Convert acceleration to mm/s\PYGZca{}2}
+            \PYG{n}{accelVals}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{*=} \PYG{l+m+mf}{9.81}\PYG{p}{;}
+            \PYG{n}{accelVals}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{*=} \PYG{l+m+mf}{9.81}\PYG{p}{;}
+            
+            \PYG{c+c1}{// Correct raw accel axis for centrifugal effects}
+            \PYG{k+kt}{double} \PYG{n}{omega} \PYG{o}{=} \PYG{n}{gyroVals}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{n}{ACCEL\PYGZus{}READ\PYGZus{}PERIOD}\PYG{p}{;}
+            \PYG{n}{accelVals}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{rAccelCorrect}\PYG{o}{*}\PYG{n}{cos}\PYG{p}{(}\PYG{n}{alphaAccelCorrect}\PYG{p}{)}\PYG{o}{*}\PYG{n}{omega}\PYG{o}{*}\PYG{n}{omega}\PYG{p}{;}
+            \PYG{n}{accelVals}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{rAccelCorrect}\PYG{o}{*}\PYG{n}{sin}\PYG{p}{(}\PYG{n}{alphaAccelCorrect}\PYG{p}{)}\PYG{o}{*}\PYG{n}{omega}\PYG{o}{*}\PYG{n}{omega}\PYG{p}{;}
+            
+            \PYG{c+c1}{// Convert to true x and y}
+            \PYG{k+kt}{double} \PYG{n}{trueAccel}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{];}
+            \PYG{n}{trueAccel}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{n}{accelVals}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{o}{*}\PYG{n}{sin}\PYG{p}{(}\PYG{n}{currentAngle}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{accelVals}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{o}{*}\PYG{n}{cos}\PYG{p}{(}\PYG{n}{currentAngle}\PYG{p}{);}
+            \PYG{n}{trueAccel}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{accelVals}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{o}{*}\PYG{n}{cos}\PYG{p}{(}\PYG{n}{currentAngle}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{accelVals}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{o}{*}\PYG{n}{sin}\PYG{p}{(}\PYG{n}{currentAngle}\PYG{p}{);}
+            
+            \PYG{c+c1}{// Integrate acceleration to get velocity and position}
+            \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{;}
+            \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}} 
+                \PYG{n}{currentVelocity}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{trueAccel}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{*} \PYG{n}{ACCEL\PYGZus{}READ\PYGZus{}PERIOD}\PYG{p}{;}
+                \PYG{n}{currentPos}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{currentVelocity}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{*} \PYG{n}{ACCEL\PYGZus{}READ\PYGZus{}PERIOD}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            
+\PYG{c+c1}{//            static int count;}
+\PYG{c+c1}{//            count++;;}
+\PYG{c+c1}{//            if (count \PYGZgt{} 10) \PYGZob{}}
+\PYG{c+c1}{//                sprintf(strbuffer, \PYGZdq{}Norm: \PYGZpc{}7.3f\PYGZbs{}n\PYGZdq{},}
+\PYG{c+c1}{//                        magVals[0]*magVals[0] + magVals[1]*magVals[1]);}
+\PYG{c+c1}{//                UART\PYGZus{}PutString(strbuffer);}
+\PYG{c+c1}{//                sprintf(strbuffer, \PYGZdq{}\PYGZpc{}7.3f, \PYGZpc{}7.3f, \PYGZpc{}7.3f, \PYGZpc{}7.3f, \PYGZpc{}7.3f, \PYGZpc{}7.3f\PYGZbs{}n\PYGZdq{}, timeElapsed, trueAccel[0], trueAccel[1], currentAngle, currentPos[0], currentPos[1]);}
+\PYG{c+c1}{//                UART\PYGZus{}PutString(strbuffer);}
+\PYG{c+c1}{//                sprintf(strbuffer, \PYGZdq{}Angle: \PYGZpc{}8.3f, Px: \PYGZpc{}8.3f, Py: \PYGZpc{}8.3f\PYGZbs{}n\PYGZdq{}, }
+\PYG{c+c1}{//                        currentAngle, currentPos[0], currentPos[1]);}
+\PYG{c+c1}{//                UART\PYGZus{}PutString(strbuffer);}
+\PYG{c+c1}{//                sprintf(strbuffer, \PYGZdq{}x Raw: \PYGZpc{}8.3f, y Raw: \PYGZpc{}8.3f, x Real: \PYGZpc{}8.3f, y Real: \PYGZpc{}8.3f\PYGZbs{}n\PYGZdq{}, }
+\PYG{c+c1}{//                        accelVals[0], accelVals[1], trueAccel[0], trueAccel[1]);}
+\PYG{c+c1}{//                UART\PYGZus{}PutString(strbuffer);}
+\PYG{c+c1}{//                sprintf(strbuffer, \PYGZdq{}                                                            \PYGZbs{}n\PYGZdq{});}
+\PYG{c+c1}{//                int breakIndex = (int) currentPos[0]/10 + 17;}
+\PYG{c+c1}{//                strbuffer[breakIndex] = \PYGZsq{}0\PYGZsq{};}
+\PYG{c+c1}{//                breakIndex = (int) currentPos[1]/10 + 38;}
+\PYG{c+c1}{//                strbuffer[breakIndex] = \PYGZsq{}0\PYGZsq{};           }
+\PYG{c+c1}{//                }
+\PYG{c+c1}{//                count = 0;}
+\PYG{c+c1}{//            \PYGZcb{}}
+            
+            
+            
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{goToTarget}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{k+kt}{int} \PYG{n}{newCounterVal} \PYG{o}{=} \PYG{n}{Counter\PYGZus{}Time\PYGZus{}ReadCounter}\PYG{p}{();}
+                \PYG{k+kt}{int} \PYG{n}{countsElapsed} \PYG{o}{=} \PYG{n}{oldCounterVal} \PYG{o}{\PYGZhy{}} \PYG{n}{newCounterVal}\PYG{p}{;}
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{countsElapsed} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{countsElapsed} \PYG{o}{+=} \PYG{l+m+mi}{65535}\PYG{p}{;}
+                \PYG{n}{timeElapsed} \PYG{o}{+=} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{countsElapsed} \PYG{o}{/} \PYG{l+m+mf}{100000.0}\PYG{p}{;}
+                \PYG{n}{oldCounterVal} \PYG{o}{=} \PYG{n}{newCounterVal}\PYG{p}{;}
+                
+                \PYG{k+kt}{double} \PYG{n}{xDist} \PYG{o}{=} \PYG{p}{(}\PYG{n}{target}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{currentPos}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]);}
+                \PYG{k+kt}{double} \PYG{n}{yDist} \PYG{o}{=} \PYG{p}{(}\PYG{n}{target}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{currentPos}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]);}
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{yDist} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{yDist} \PYG{o}{=} \PYG{l+m+mf}{0.0000001}\PYG{p}{;}
+                \PYG{n}{heading} \PYG{o}{=} \PYG{n}{atan}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{n}{xDist}\PYG{o}{/}\PYG{n}{yDist}\PYG{p}{);}
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{yDist} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{heading} \PYG{o}{+=} \PYG{n}{M\PYGZus{}PI}\PYG{p}{;}
+                \PYG{k+kt}{double} \PYG{n}{dist} \PYG{o}{=} \PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{xDist}\PYG{o}{*}\PYG{n}{xDist} \PYG{o}{+} \PYG{n}{yDist}\PYG{o}{*}\PYG{n}{yDist}\PYG{p}{);}
+                \PYG{n}{magnitude} \PYG{o}{=} \PYG{n}{P}\PYG{o}{*}\PYG{n}{dist}\PYG{p}{;}
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{magnitude} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{magnitude} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+                
+                \PYG{c+c1}{//targetAngle = M\PYGZus{}PI/2;}
+                
+                \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{n}{enableGyro} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+                
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{dist} \PYG{o}{\PYGZlt{}} \PYG{n}{targetMargin}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{goToTarget} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                    \PYG{n}{magnitude} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                    \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                    \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Target Reached in \PYGZpc{}fs}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{timeElapsed}\PYG{p}{);}
+                    \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+                \PYG{p}{\PYGZcb{}}
+                
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{timeElapsed} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{goToTarget} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                    \PYG{n}{magnitude} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                    \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                    \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Time Up}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+                    \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+                \PYG{p}{\PYGZcb{}}
+
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{timeElapsed} \PYG{o}{\PYGZgt{}} \PYG{n}{targetTime} \PYG{o}{\PYGZhy{}} \PYG{n}{flickTime} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{o}{!}\PYG{n}{rotOn} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{timeElapsed} \PYG{o}{\PYGZlt{}} \PYG{n}{targetTime}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{rotation} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+                    \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Rot on}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+                    \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+                    \PYG{n}{rotOn} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+                \PYG{p}{\PYGZcb{}}
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{timeElapsed} \PYG{o}{\PYGZgt{}} \PYG{n}{targetTime} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{rotOn}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                    \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Rot off}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+                    \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+                    \PYG{n}{rotOn} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+                \PYG{p}{\PYGZcb{}}
+            \PYG{p}{\PYGZcb{}}
+            
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{accelerationLimitEnabled}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{oldMag}\PYG{p}{;}
+                \PYG{k+kt}{double} \PYG{n}{setMag} \PYG{o}{=} \PYG{p}{(}\PYG{n}{fabs}\PYG{p}{(}\PYG{n}{magnitude}\PYG{o}{\PYGZhy{}}\PYG{n}{oldMag}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{n}{accelLimit}\PYG{p}{)} \PYG{o}{?} \PYG{p}{(}\PYG{n}{magnitude} \PYG{o}{\PYGZhy{}} \PYG{n}{oldMag}\PYG{p}{)}\PYG{o}{/}\PYG{n}{fabs}\PYG{p}{(}\PYG{n}{magnitude}\PYG{o}{\PYGZhy{}}\PYG{n}{oldMag}\PYG{p}{)} \PYG{o}{*} \PYG{n}{accelLimit} \PYG{o}{+} \PYG{n+nl}{oldMag} \PYG{p}{:} \PYG{n}{magnitude}\PYG{p}{;}
+                \PYG{n}{driveMagPhase}\PYG{p}{(}\PYG{n}{heading}\PYG{p}{,} \PYG{n}{setMag}\PYG{p}{,} \PYG{n}{rotation}\PYG{p}{,} \PYG{n}{enableGyro} \PYG{o}{==} \PYG{l+m+mi}{1} \PYG{o}{?} \PYG{n+nl}{currentAngle} \PYG{p}{:} \PYG{l+m+mi}{0}\PYG{p}{);}
+                \PYG{n}{oldMag} \PYG{o}{=} \PYG{n}{setMag}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{k}{else} \PYG{p}{\PYGZob{}}
+                \PYG{n}{driveMagPhase}\PYG{p}{(}\PYG{n}{heading}\PYG{p}{,} \PYG{n}{magnitude}\PYG{p}{,} \PYG{n}{rotation}\PYG{p}{,} \PYG{n}{enableGyro} \PYG{o}{==} \PYG{l+m+mi}{1} \PYG{o}{?} \PYG{n+nl}{currentAngle} \PYG{p}{:} \PYG{l+m+mi}{0}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+            
+            
+\PYG{c+c1}{//            static int count;}
+\PYG{c+c1}{//            count++;}
+\PYG{c+c1}{//            if (count \PYGZgt{} 10) \PYGZob{}  //100x per sec}
+\PYG{c+c1}{//                count = 0;}
+\PYG{c+c1}{//                Accel\PYGZus{}getAccel(accelVals);}
+\PYG{c+c1}{//                Accel\PYGZus{}getGyro(gyroVals);}
+\PYG{c+c1}{//                }
+\PYG{c+c1}{//                int breakIndex;}
+\PYG{c+c1}{//                switch (accelTestVal) \PYGZob{}}
+\PYG{c+c1}{//                    case 0:}
+\PYG{c+c1}{////                        sprintf(strbuffer, \PYGZdq{}\PYGZpc{}8.3f, \PYGZpc{}8.3f, \PYGZpc{}8.3f, \PYGZpc{}8.3f, \PYGZpc{}8.3f, \PYGZpc{}8.3f\PYGZbs{}n\PYGZdq{}, accelVals[0], accelVals[1], accelVals[2], gyroVals[0], gyroVals[1], gyroVals[2]);}
+\PYG{c+c1}{//                        sprintf(strbuffer, \PYGZdq{}\PYGZpc{}2.1f, \PYGZpc{}2.1f, \PYGZpc{}2.1f, \PYGZpc{}2.1f, \PYGZpc{}2.1f, \PYGZpc{}2.1f\PYGZbs{}n\PYGZdq{}, accelVals[0], accelVals[1], accelVals[2], gyroVals[0], gyroVals[1], gyroVals[2]);}
+\PYG{c+c1}{//                        break;}
+\PYG{c+c1}{//                    case 1:}
+\PYG{c+c1}{//                        sprintf(strbuffer, \PYGZdq{}                                                            \PYGZbs{}n\PYGZdq{});}
+\PYG{c+c1}{//                        breakIndex = (int) accelVals[0]/200 + 6;}
+\PYG{c+c1}{//                        strbuffer[breakIndex] = \PYGZsq{}0\PYGZsq{};}
+\PYG{c+c1}{//                        break;}
+\PYG{c+c1}{//                    case 2:}
+\PYG{c+c1}{//                        sprintf(strbuffer, \PYGZdq{}                                                            \PYGZbs{}n\PYGZdq{});}
+\PYG{c+c1}{//                        breakIndex = (int) accelVals[1]/200 + 6;}
+\PYG{c+c1}{//                        strbuffer[breakIndex] = \PYGZsq{}0\PYGZsq{};}
+\PYG{c+c1}{//                        break;}
+\PYG{c+c1}{//                    case 3:}
+\PYG{c+c1}{//                        sprintf(strbuffer, \PYGZdq{}                                                            \PYGZbs{}n\PYGZdq{});}
+\PYG{c+c1}{//                        breakIndex = (int) accelVals[2]/200 + 6;}
+\PYG{c+c1}{//                        strbuffer[breakIndex] = \PYGZsq{}0\PYGZsq{};}
+\PYG{c+c1}{//                        break;}
+\PYG{c+c1}{//                    case 4:}
+\PYG{c+c1}{//                        sprintf(strbuffer, \PYGZdq{}                                                            \PYGZbs{}n\PYGZdq{});}
+\PYG{c+c1}{//                        breakIndex = (int) gyroVals[0]/100 + 6;}
+\PYG{c+c1}{//                        strbuffer[breakIndex] = \PYGZsq{}0\PYGZsq{};}
+\PYG{c+c1}{//                        break;}
+\PYG{c+c1}{//                    case 5:}
+\PYG{c+c1}{//                        sprintf(strbuffer, \PYGZdq{}                                                            \PYGZbs{}n\PYGZdq{});}
+\PYG{c+c1}{//                        breakIndex = (int) gyroVals[1]/100 + 6;}
+\PYG{c+c1}{//                        strbuffer[breakIndex] = \PYGZsq{}0\PYGZsq{};}
+\PYG{c+c1}{//                        break;}
+\PYG{c+c1}{//                    case 6:}
+\PYG{c+c1}{//                        sprintf(strbuffer, \PYGZdq{}                                                            \PYGZbs{}n\PYGZdq{});}
+\PYG{c+c1}{//                        breakIndex = (int) gyroVals[2]/100 + 6;}
+\PYG{c+c1}{//                        strbuffer[breakIndex] = \PYGZsq{}0\PYGZsq{};}
+\PYG{c+c1}{//                        break;}
+\PYG{c+c1}{//                \PYGZcb{}}
+\PYG{c+c1}{//                UART\PYGZus{}PutString(strbuffer);}
+\PYG{c+c1}{//            \PYGZcb{}}
+            \PYG{n}{refreshInterrupted} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* [] END OF FILE */}
+\end{Verbatim}

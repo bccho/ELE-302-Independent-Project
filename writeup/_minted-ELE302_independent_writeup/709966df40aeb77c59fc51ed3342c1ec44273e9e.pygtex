@@ -1,0 +1,155 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/***************************************************************************}
+\PYG{c+cm}{  This is a library for the LSM9DS0 Accelerometer and magnentometer/compass}
+
+\PYG{c+cm}{  Designed specifically to work with the Adafruit LSM9DS0 Breakouts}
+
+\PYG{c+cm}{  These sensors use I2C to communicate, 2 pins are required to interface.}
+
+\PYG{c+cm}{  Adafruit invests time and resources providing this open source code,}
+\PYG{c+cm}{  please support Adafruit andopen\PYGZhy{}source hardware by purchasing products}
+\PYG{c+cm}{  from Adafruit!}
+
+\PYG{c+cm}{  Written by Kevin Townsend for Adafruit Industries.  }
+\PYG{c+cm}{  BSD license, all text above must be included in any redistribution}
+\PYG{c+cm}{ ***************************************************************************/}
+\PYG{c+cp}{\PYGZsh{}ifndef \PYGZus{}\PYGZus{}LSM9DS0\PYGZus{}H\PYGZus{}\PYGZus{}}
+\PYG{c+cp}{\PYGZsh{}define \PYGZus{}\PYGZus{}LSM9DS0\PYGZus{}H\PYGZus{}\PYGZus{}}
+
+\PYG{k+kt}{int} \PYG{n+nf}{Accel\PYGZus{}init}\PYG{p}{();}
+\PYG{k+kt}{void} \PYG{n+nf}{Accel\PYGZus{}getAccel}\PYG{p}{(}\PYG{k+kt}{double} \PYG{o}{*}\PYG{n}{accelData}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{Accel\PYGZus{}getMag}\PYG{p}{(}\PYG{k+kt}{double} \PYG{o}{*}\PYG{n}{magData}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{Accel\PYGZus{}getGyro}\PYG{p}{(}\PYG{k+kt}{double} \PYG{o}{*}\PYG{n}{gyroData}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{Accel\PYGZus{}refresh}\PYG{p}{();}
+
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}ADDRESS\PYGZus{}ACCELMAG           (0x1D)         }\PYG{c+c1}{// 3B \PYGZgt{}\PYGZgt{} 1 = 7bit default}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}ADDRESS\PYGZus{}GYRO               (0x6B)         }\PYG{c+c1}{// D6 \PYGZgt{}\PYGZgt{} 1 = 7bit default}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}XM\PYGZus{}ID                      (0b01001001)}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}G\PYGZus{}ID                       (0b11010100)}
+
+\PYG{c+cp}{\PYGZsh{}define I2C\PYGZus{}WRITE           (0)}
+\PYG{c+cp}{\PYGZsh{}define I2C\PYGZus{}READ            (1)}
+\PYG{c+cp}{\PYGZsh{}define I2C\PYGZus{}SEND\PYGZus{}NACK       (0)}
+\PYG{c+cp}{\PYGZsh{}define I2C\PYGZus{}SEND\PYGZus{}ACK        (1)}
+\PYG{c+cp}{\PYGZsh{}define I2C\PYGZus{}AUTO\PYGZus{}INCREMENT  (0x80)}
+
+\PYG{c+c1}{// Linear Acceleration: mg per LSB}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}ACCEL\PYGZus{}MG\PYGZus{}LSB\PYGZus{}2G (0.061F)}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}ACCEL\PYGZus{}MG\PYGZus{}LSB\PYGZus{}4G (0.122F)}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}ACCEL\PYGZus{}MG\PYGZus{}LSB\PYGZus{}6G (0.183F)}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}ACCEL\PYGZus{}MG\PYGZus{}LSB\PYGZus{}8G (0.244F)}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}ACCEL\PYGZus{}MG\PYGZus{}LSB\PYGZus{}16G (0.732F) }\PYG{c+c1}{// Is this right? Was expecting 0.488F}
+
+\PYG{c+c1}{// Magnetic Field Strength: gauss range}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}MAG\PYGZus{}MGAUSS\PYGZus{}2GAUSS      (0.08F)}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}MAG\PYGZus{}MGAUSS\PYGZus{}4GAUSS      (0.16F)}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}MAG\PYGZus{}MGAUSS\PYGZus{}8GAUSS      (0.32F)}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}MAG\PYGZus{}MGAUSS\PYGZus{}12GAUSS     (0.48F)}
+
+\PYG{c+c1}{// Angular Rate: dps per LSB}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}GYRO\PYGZus{}DPS\PYGZus{}DIGIT\PYGZus{}245DPS      (0.00875F)}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}GYRO\PYGZus{}DPS\PYGZus{}DIGIT\PYGZus{}500DPS      (0.01750F)}
+\PYG{c+cp}{\PYGZsh{}define LSM9DS0\PYGZus{}GYRO\PYGZus{}DPS\PYGZus{}DIGIT\PYGZus{}2000DPS     (0.07000F)}
+
+\PYG{c+cp}{\PYGZsh{}define GYROTYPE    (1)}
+\PYG{c+cp}{\PYGZsh{}define XMTYPE      (0)}
+
+
+\PYG{k}{typedef} \PYG{k}{enum}
+\PYG{p}{\PYGZob{}}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}WHO\PYGZus{}AM\PYGZus{}I\PYGZus{}G}          \PYG{o}{=} \PYG{l+m+mh}{0x0F}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG1\PYGZus{}G}         \PYG{o}{=} \PYG{l+m+mh}{0x20}\PYG{p}{,}
+    \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG2\PYGZus{}G}         \PYG{o}{=} \PYG{l+m+mh}{0x21}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG3\PYGZus{}G}         \PYG{o}{=} \PYG{l+m+mh}{0x22}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG4\PYGZus{}G}         \PYG{o}{=} \PYG{l+m+mh}{0x23}\PYG{p}{,}
+    \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG5\PYGZus{}G}         \PYG{o}{=} \PYG{l+m+mh}{0x24}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}X\PYGZus{}L\PYGZus{}G}           \PYG{o}{=} \PYG{l+m+mh}{0x28}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}X\PYGZus{}H\PYGZus{}G}           \PYG{o}{=} \PYG{l+m+mh}{0x29}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Y\PYGZus{}L\PYGZus{}G}           \PYG{o}{=} \PYG{l+m+mh}{0x2A}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Y\PYGZus{}H\PYGZus{}G}           \PYG{o}{=} \PYG{l+m+mh}{0x2B}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Z\PYGZus{}L\PYGZus{}G}           \PYG{o}{=} \PYG{l+m+mh}{0x2C}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Z\PYGZus{}H\PYGZus{}G}           \PYG{o}{=} \PYG{l+m+mh}{0x2D}\PYG{p}{,}
+    \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}FIFO\PYGZus{}CTRL\PYGZus{}REG\PYGZus{}G}     \PYG{o}{=} \PYG{l+m+mh}{0x2E}\PYG{p}{,}
+\PYG{p}{\PYGZcb{}} \PYG{n}{lsm9ds0GyroRegisters\PYGZus{}t}\PYG{p}{;}
+
+\PYG{k}{typedef} \PYG{k}{enum}
+\PYG{p}{\PYGZob{}}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}TEMP\PYGZus{}OUT\PYGZus{}L\PYGZus{}XM}       \PYG{o}{=} \PYG{l+m+mh}{0x05}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}TEMP\PYGZus{}OUT\PYGZus{}H\PYGZus{}XM}       \PYG{o}{=} \PYG{l+m+mh}{0x06}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}STATUS\PYGZus{}REG\PYGZus{}M}        \PYG{o}{=} \PYG{l+m+mh}{0x07}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}X\PYGZus{}L\PYGZus{}M}           \PYG{o}{=} \PYG{l+m+mh}{0x08}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}X\PYGZus{}H\PYGZus{}M}           \PYG{o}{=} \PYG{l+m+mh}{0x09}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Y\PYGZus{}L\PYGZus{}M}           \PYG{o}{=} \PYG{l+m+mh}{0x0A}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Y\PYGZus{}H\PYGZus{}M}           \PYG{o}{=} \PYG{l+m+mh}{0x0B}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Z\PYGZus{}L\PYGZus{}M}           \PYG{o}{=} \PYG{l+m+mh}{0x0C}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Z\PYGZus{}H\PYGZus{}M}           \PYG{o}{=} \PYG{l+m+mh}{0x0D}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}WHO\PYGZus{}AM\PYGZus{}I\PYGZus{}XM}         \PYG{o}{=} \PYG{l+m+mh}{0x0F}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}INT\PYGZus{}CTRL\PYGZus{}REG\PYGZus{}M}      \PYG{o}{=} \PYG{l+m+mh}{0x12}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}INT\PYGZus{}SRC\PYGZus{}REG\PYGZus{}M}       \PYG{o}{=} \PYG{l+m+mh}{0x13}\PYG{p}{,}
+    \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG0\PYGZus{}XM}        \PYG{o}{=} \PYG{l+m+mh}{0x1F}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG1\PYGZus{}XM}        \PYG{o}{=} \PYG{l+m+mh}{0x20}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG2\PYGZus{}XM}        \PYG{o}{=} \PYG{l+m+mh}{0x21}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG5\PYGZus{}XM}        \PYG{o}{=} \PYG{l+m+mh}{0x24}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG6\PYGZus{}XM}        \PYG{o}{=} \PYG{l+m+mh}{0x25}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG7\PYGZus{}XM}        \PYG{o}{=} \PYG{l+m+mh}{0x26}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}X\PYGZus{}L\PYGZus{}A}           \PYG{o}{=} \PYG{l+m+mh}{0x28}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}X\PYGZus{}H\PYGZus{}A}           \PYG{o}{=} \PYG{l+m+mh}{0x29}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Y\PYGZus{}L\PYGZus{}A}           \PYG{o}{=} \PYG{l+m+mh}{0x2A}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Y\PYGZus{}H\PYGZus{}A}           \PYG{o}{=} \PYG{l+m+mh}{0x2B}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Z\PYGZus{}L\PYGZus{}A}           \PYG{o}{=} \PYG{l+m+mh}{0x2C}\PYG{p}{,}
+	\PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}Z\PYGZus{}H\PYGZus{}A}           \PYG{o}{=} \PYG{l+m+mh}{0x2D}\PYG{p}{,}
+    \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}FIFO\PYGZus{}CTRL\PYGZus{}REG}       \PYG{o}{=} \PYG{l+m+mh}{0x2E}\PYG{p}{,}
+\PYG{p}{\PYGZcb{}} \PYG{n}{lsm9ds0MagAccelRegisters\PYGZus{}t}\PYG{p}{;}
+
+\PYG{k}{typedef} \PYG{k}{enum}
+\PYG{p}{\PYGZob{}}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELRANGE\PYGZus{}2G}                \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b000} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELRANGE\PYGZus{}4G}                \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b001} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELRANGE\PYGZus{}6G}                \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b010} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELRANGE\PYGZus{}8G}                \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b011} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELRANGE\PYGZus{}16G}               \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b100} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{)}
+\PYG{p}{\PYGZcb{}} \PYG{n}{lsm9ds0AccelRange\PYGZus{}t}\PYG{p}{;}
+
+\PYG{k}{typedef} \PYG{k}{enum}
+\PYG{p}{\PYGZob{}}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELDATARATE\PYGZus{}POWERDOWN}      \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b0000} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELDATARATE\PYGZus{}3\PYGZus{}125HZ}        \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b0001} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELDATARATE\PYGZus{}6\PYGZus{}25HZ}         \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b0010} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELDATARATE\PYGZus{}12\PYGZus{}5HZ}         \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b0011} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELDATARATE\PYGZus{}25HZ}           \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b0100} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELDATARATE\PYGZus{}50HZ}           \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b0101} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELDATARATE\PYGZus{}100HZ}          \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b0110} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELDATARATE\PYGZus{}200HZ}          \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b0111} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELDATARATE\PYGZus{}400HZ}          \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b1000} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELDATARATE\PYGZus{}800HZ}          \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b1001} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}
+	\PYG{n}{LSM9DS0\PYGZus{}ACCELDATARATE\PYGZus{}1600HZ}         \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b1010} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{)}
+\PYG{p}{\PYGZcb{}} \PYG{n}{lm9ds0AccelDataRate\PYGZus{}t}\PYG{p}{;}
+
+\PYG{k}{typedef} \PYG{k}{enum}
+\PYG{p}{\PYGZob{}}
+  \PYG{n}{LSM9DS0\PYGZus{}MAGGAIN\PYGZus{}2GAUSS}               \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b00} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{5}\PYG{p}{),}  \PYG{c+c1}{// +/\PYGZhy{} 2 gauss}
+  \PYG{n}{LSM9DS0\PYGZus{}MAGGAIN\PYGZus{}4GAUSS}               \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b01} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{5}\PYG{p}{),}  \PYG{c+c1}{// +/\PYGZhy{} 4 gauss}
+  \PYG{n}{LSM9DS0\PYGZus{}MAGGAIN\PYGZus{}8GAUSS}               \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b10} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{5}\PYG{p}{),}  \PYG{c+c1}{// +/\PYGZhy{} 8 gauss}
+  \PYG{n}{LSM9DS0\PYGZus{}MAGGAIN\PYGZus{}12GAUSS}              \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b11} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{5}\PYG{p}{)}   \PYG{c+c1}{// +/\PYGZhy{} 12 gauss}
+\PYG{p}{\PYGZcb{}} \PYG{n}{lsm9ds0MagGain\PYGZus{}t}\PYG{p}{;}
+
+\PYG{k}{typedef} \PYG{k}{enum}
+\PYG{p}{\PYGZob{}}
+  \PYG{n}{LSM9DS0\PYGZus{}MAGDATARATE\PYGZus{}3\PYGZus{}125HZ}          \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b000} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{p}{),}
+  \PYG{n}{LSM9DS0\PYGZus{}MAGDATARATE\PYGZus{}6\PYGZus{}25HZ}           \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b001} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{p}{),}
+  \PYG{n}{LSM9DS0\PYGZus{}MAGDATARATE\PYGZus{}12\PYGZus{}5HZ}           \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b010} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{p}{),}
+  \PYG{n}{LSM9DS0\PYGZus{}MAGDATARATE\PYGZus{}25HZ}             \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b011} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{p}{),}
+  \PYG{n}{LSM9DS0\PYGZus{}MAGDATARATE\PYGZus{}50HZ}             \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b100} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{p}{),}
+  \PYG{n}{LSM9DS0\PYGZus{}MAGDATARATE\PYGZus{}100HZ}            \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b101} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{p}{)}
+\PYG{p}{\PYGZcb{}} \PYG{n}{lsm9ds0MagDataRate\PYGZus{}t}\PYG{p}{;}
+
+
+\PYG{k}{typedef} \PYG{k}{enum}
+\PYG{p}{\PYGZob{}}
+	\PYG{n}{LSM9DS0\PYGZus{}GYROSCALE\PYGZus{}245DPS}             \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b00} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}  \PYG{c+c1}{// +/\PYGZhy{} 245 degrees per second rotation}
+	\PYG{n}{LSM9DS0\PYGZus{}GYROSCALE\PYGZus{}500DPS}             \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b01} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{),}  \PYG{c+c1}{// +/\PYGZhy{} 500 degrees per second rotation}
+	\PYG{n}{LSM9DS0\PYGZus{}GYROSCALE\PYGZus{}2000DPS}            \PYG{o}{=} \PYG{p}{(}\PYG{l+m+mi}{0}\PYG{n}{b10} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{)}   \PYG{c+c1}{// +/\PYGZhy{} 2000 degrees per second rotation}
+\PYG{p}{\PYGZcb{}} \PYG{n}{lsm9ds0GyroScale\PYGZus{}t}\PYG{p}{;}
+
+\PYG{c+cp}{\PYGZsh{}endif}
+\end{Verbatim}

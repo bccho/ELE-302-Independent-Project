@@ -1,0 +1,388 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/***************************************************************************}
+\PYG{c+cm}{  This is a library for the LSM9DS0 Accelerometer and magnentometer/compass}
+
+\PYG{c+cm}{  Designed specifically to work with the Adafruit LSM9DS0 Breakouts}
+
+\PYG{c+cm}{  These sensors use I2C to communicate, 2 pins are required to interface.}
+
+\PYG{c+cm}{  Adafruit invests time and resources providing this open source code,}
+\PYG{c+cm}{  please support Adafruit andopen\PYGZhy{}source hardware by purchasing products}
+\PYG{c+cm}{  from Adafruit!}
+
+\PYG{c+cm}{  Written by Kevin Townsend for Adafruit Industries.  }
+\PYG{c+cm}{  BSD license, all text above must be included in any redistribution}
+\PYG{c+cm}{ ***************************************************************************/}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}accel.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}device.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdio.h\PYGZgt{}}
+
+\PYG{c+cm}{/*\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}*/}
+
+\PYG{k+kt}{void} \PYG{n+nf}{readAccel}\PYG{p}{(}\PYG{k+kt}{int} \PYG{o}{*}\PYG{n}{accelData}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{readGyro}\PYG{p}{(}\PYG{k+kt}{int} \PYG{o}{*}\PYG{n}{gyroData}\PYG{p}{);}
+\PYG{k+kt}{void} \PYG{n+nf}{readMag}\PYG{p}{(}\PYG{k+kt}{int} \PYG{o}{*}\PYG{n}{magData}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{write8}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{type}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{reg}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{value}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n+nf}{read8}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{type}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{reg}\PYG{p}{);}
+\PYG{k}{static} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n+nf}{readBuffer}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{type}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{reg}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{len}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{o}{*}\PYG{n}{buffer}\PYG{p}{);}
+
+\PYG{c+cm}{/*\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}*/}
+
+\PYG{k}{static} \PYG{k+kt}{char} \PYG{n}{strbuffer}\PYG{p}{[}\PYG{l+m+mi}{100}\PYG{p}{];}
+
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{accelMgLsb}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{gyroDpsDigit}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{magMgaussLsb}\PYG{p}{;}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{zeroed} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+\PYG{c+cp}{\PYGZsh{}define AVG\PYGZus{}BUF\PYGZus{}LEN 100}
+\PYG{c+cp}{\PYGZsh{}define NUM\PYGZus{}ZERO\PYGZus{}READINGS 1000}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{initBufPos} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{][}\PYG{l+m+mi}{3}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{initGyroValsBuf}\PYG{p}{[}\PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{][}\PYG{l+m+mi}{3}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{gyroOffset}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{zxCorrelationAccel} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{zyCorrelationAccel} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{c+c1}{//static double zxCorrelationGyro = 0;}
+\PYG{c+c1}{//static double zyCorrelationGyro = 0;}
+
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{bufPos} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{][}\PYG{l+m+mi}{3}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{gyroValsBuf}\PYG{p}{[}\PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{][}\PYG{l+m+mi}{3}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{accelValAvg}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{gyroValAvg}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{];}
+\PYG{k}{static} \PYG{k+kt}{int} \PYG{n}{magValAvg}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{];}
+
+
+\PYG{c+cm}{/*\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}*/}
+
+
+
+\PYG{c+cm}{/***************************************************************************}
+\PYG{c+cm}{ PUBLIC FUNCTIONS}
+\PYG{c+cm}{ ***************************************************************************/}
+ 
+
+\PYG{k+kt}{int} \PYG{n+nf}{Accel\PYGZus{}init}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{id} \PYG{o}{=} \PYG{n}{read8}\PYG{p}{(}\PYG{n}{XMTYPE}\PYG{p}{,} \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}WHO\PYGZus{}AM\PYGZus{}I\PYGZus{}XM}\PYG{p}{);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{id} \PYG{o}{!=} \PYG{n}{LSM9DS0\PYGZus{}XM\PYGZus{}ID}\PYG{p}{)} \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+    \PYG{n}{id} \PYG{o}{=} \PYG{n}{read8}\PYG{p}{(}\PYG{n}{GYROTYPE}\PYG{p}{,} \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}WHO\PYGZus{}AM\PYGZus{}I\PYGZus{}G}\PYG{p}{);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{id} \PYG{o}{!=} \PYG{n}{LSM9DS0\PYGZus{}G\PYGZus{}ID}\PYG{p}{)} \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+	\PYG{c+c1}{// Accelerometer Settings}
+\PYG{c+c1}{//    // Enable FIFO}
+\PYG{c+c1}{//	write8(XMTYPE, LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG0\PYGZus{}XM, 0x40);}
+    \PYG{c+c1}{// 1600Hz, enable XYZ}
+	\PYG{n}{write8}\PYG{p}{(}\PYG{n}{XMTYPE}\PYG{p}{,} \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG1\PYGZus{}XM}\PYG{p}{,} \PYG{l+m+mh}{0xA7}\PYG{p}{);}
+    \PYG{c+c1}{// 773Hz anti\PYGZhy{}alias filter, +\PYGZhy{}2g range}
+	\PYG{n}{write8}\PYG{p}{(}\PYG{n}{XMTYPE}\PYG{p}{,} \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG2\PYGZus{}XM}\PYG{p}{,} \PYG{l+m+mh}{0x00}\PYG{p}{);}
+\PYG{c+c1}{//    // 50Hz anti\PYGZhy{}alias filter, +\PYGZhy{}2g range}
+\PYG{c+c1}{//	write8(XMTYPE, LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG2\PYGZus{}XM, 0xC0);}
+\PYG{c+c1}{//    // Enable filters}
+\PYG{c+c1}{//	write8(XMTYPE, LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG7\PYGZus{}XM, 0x20);}
+\PYG{c+c1}{//    // Enable FIFO stream mode}
+\PYG{c+c1}{//	write8(XMTYPE, LSM9DS0\PYGZus{}REGISTER\PYGZus{}FIFO\PYGZus{}CTRL\PYGZus{}REG, 0x40);}
+    
+    \PYG{n}{accelMgLsb} \PYG{o}{=} \PYG{n}{LSM9DS0\PYGZus{}ACCEL\PYGZus{}MG\PYGZus{}LSB\PYGZus{}2G}\PYG{p}{;}
+	
+    \PYG{c+c1}{// Magnetometer Settings}
+    \PYG{n}{write8}\PYG{p}{(}\PYG{n}{XMTYPE}\PYG{p}{,} \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG7\PYGZus{}XM}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{n}{b00000000}\PYG{p}{);}
+    \PYG{n}{magMgaussLsb} \PYG{o}{=} \PYG{n}{LSM9DS0\PYGZus{}MAG\PYGZus{}MGAUSS\PYGZus{}2GAUSS}\PYG{p}{;}
+    
+    \PYG{c+c1}{// Gyro Settings}
+    \PYG{c+c1}{// 760Hz, 30 cutoff, enable XYZ}
+	\PYG{n}{write8}\PYG{p}{(}\PYG{n}{GYROTYPE}\PYG{p}{,} \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG1\PYGZus{}G}\PYG{p}{,} \PYG{l+m+mh}{0xCF}\PYG{p}{);}
+    \PYG{c+c1}{// Set high pass filter for 7.2Hz}
+    \PYG{n}{write8}\PYG{p}{(}\PYG{n}{GYROTYPE}\PYG{p}{,} \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG2\PYGZus{}G}\PYG{p}{,} \PYG{l+m+mh}{0x00}\PYG{p}{);}
+    \PYG{c+c1}{// Set scale to +\PYGZhy{}245dps, self\PYGZhy{}test off, little endian data}
+    \PYG{n}{write8}\PYG{p}{(}\PYG{n}{GYROTYPE}\PYG{p}{,} \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG4\PYGZus{}G}\PYG{p}{,} \PYG{l+m+mh}{0x00}\PYG{p}{);}
+\PYG{c+c1}{//    // Enable FIFO and high\PYGZhy{}pass filter}
+\PYG{c+c1}{//    write8(GYROTYPE, LSM9DS0\PYGZus{}REGISTER\PYGZus{}CTRL\PYGZus{}REG5\PYGZus{}G, 0x52);}
+\PYG{c+c1}{//    // Enable stream mode for FIFO}
+\PYG{c+c1}{//    write8(GYROTYPE, LSM9DS0\PYGZus{}REGISTER\PYGZus{}FIFO\PYGZus{}CTRL\PYGZus{}REG\PYGZus{}G, 0x40);}
+    
+    \PYG{n}{gyroDpsDigit} \PYG{o}{=} \PYG{n}{LSM9DS0\PYGZus{}GYRO\PYGZus{}DPS\PYGZus{}DIGIT\PYGZus{}245DPS}\PYG{p}{;}
+    
+    \PYG{c+c1}{// Init arrays}
+    \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{,}\PYG{n}{j}\PYG{p}{;}
+    \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{for} \PYG{p}{(}\PYG{n}{j} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{j} \PYG{o}{\PYGZlt{}} \PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{;} \PYG{n}{j}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{j}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{gyroValsBuf}\PYG{p}{[}\PYG{n}{j}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    
+    \PYG{k}{return} \PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{Accel\PYGZus{}refresh}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// Gather values for zeroing routine}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{zeroed} \PYG{o}{!=} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}   
+        \PYG{n}{readAccel}\PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{initBufPos}\PYG{p}{]);}
+        \PYG{n}{readGyro}\PYG{p}{(}\PYG{n}{initGyroValsBuf}\PYG{p}{[}\PYG{n}{initBufPos}\PYG{p}{]);}
+        \PYG{n}{initBufPos}\PYG{o}{++}\PYG{p}{;}
+        
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{initBufPos} \PYG{o}{\PYGZgt{}=} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{,} \PYG{n}{j}\PYG{p}{;}
+            \PYG{c+c1}{// Calculate mean of init data}
+            \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{k}{for} \PYG{p}{(}\PYG{n}{j} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{j} \PYG{o}{\PYGZlt{}} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;} \PYG{n}{j}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{accelOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{j}\PYG{p}{][}\PYG{n}{i}\PYG{p}{];}
+                    \PYG{n}{gyroOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{initGyroValsBuf}\PYG{p}{[}\PYG{n}{j}\PYG{p}{][}\PYG{n}{i}\PYG{p}{];}
+                \PYG{p}{\PYGZcb{}}
+                \PYG{n}{accelOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/=} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;}
+                \PYG{n}{gyroOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/=} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            
+\PYG{c+c1}{//            // Calculate correlation coefficients}
+\PYG{c+c1}{//            double zxAccelInner = 0;}
+\PYG{c+c1}{//            double zyAccelInner = 0;}
+\PYG{c+c1}{////            double zxGyroInner = 0;}
+\PYG{c+c1}{////            double zyGyroInner = 0;}
+\PYG{c+c1}{//            double zAccelNormSquare = 0;}
+\PYG{c+c1}{////            double zGyroNormSquare = 0;}
+\PYG{c+c1}{//            for (i = 0; i \PYGZlt{} NUM\PYGZus{}ZERO\PYGZus{}READINGS; i++) \PYGZob{}}
+\PYG{c+c1}{//                zxAccelInner += (initAccelValsBuf[i][2] \PYGZhy{} accelOffset[2]) * }
+\PYG{c+c1}{//                                (initAccelValsBuf[i][0] \PYGZhy{} accelOffset[0]);}
+\PYG{c+c1}{//                zyAccelInner += (initAccelValsBuf[i][2] \PYGZhy{} accelOffset[2]) * }
+\PYG{c+c1}{//                                (initAccelValsBuf[i][1] \PYGZhy{} accelOffset[1]);}
+\PYG{c+c1}{////                zxGyroInner += (initGyroValsBuf[i][2] \PYGZhy{} gyroOffset[2]) * }
+\PYG{c+c1}{////                               (initGyroValsBuf[i][0] \PYGZhy{} gyroOffset[0]);}
+\PYG{c+c1}{////                zyGyroInner += (initGyroValsBuf[i][2] \PYGZhy{} gyroOffset[2]) * }
+\PYG{c+c1}{////                               (initGyroValsBuf[i][1] \PYGZhy{} gyroOffset[1]);}
+\PYG{c+c1}{//                zAccelNormSquare += (initAccelValsBuf[i][2] \PYGZhy{} accelOffset[2]) * }
+\PYG{c+c1}{//                                    (initAccelValsBuf[i][2] \PYGZhy{} accelOffset[2]);}
+\PYG{c+c1}{////                zGyroNormSquare += (initGyroValsBuf[i][2] \PYGZhy{} gyroOffset[2]) * }
+\PYG{c+c1}{////                                   (initGyroValsBuf[i][2] \PYGZhy{} gyroOffset[2]);}
+\PYG{c+c1}{//            \PYGZcb{}}
+\PYG{c+c1}{//            zxCorrelationAccel = zxAccelInner / zAccelNormSquare;}
+\PYG{c+c1}{//            zyCorrelationAccel = zyAccelInner / zAccelNormSquare;}
+\PYG{c+c1}{////            zxCorrelationGyro = zxGyroInner / zGyroNormSquare;}
+\PYG{c+c1}{////            zyCorrelationGyro = zyGyroInner / zGyroNormSquare;}
+
+             \PYG{c+c1}{// Calculate correlation coefficients test}
+            \PYG{k+kt}{int} \PYG{n}{zxAccelInner} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k+kt}{int} \PYG{n}{zyAccelInner} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k+kt}{int} \PYG{n}{zAccelNormSquare} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{zxAccelInner} \PYG{o}{+=} \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])} \PYG{o}{*} 
+                                \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])} \PYG{o}{/} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;}
+                \PYG{n}{zyAccelInner} \PYG{o}{+=} \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])} \PYG{o}{*} 
+                                \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])} \PYG{o}{/} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;}
+                \PYG{n}{zAccelNormSquare} \PYG{o}{+=} \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])} \PYG{o}{*} 
+                                    \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])} \PYG{o}{/} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{k+kt}{double} \PYG{n}{zxCorrelationAccel} \PYG{o}{=} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{zxAccelInner} \PYG{o}{/} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{zAccelNormSquare}\PYG{p}{;}
+            \PYG{k+kt}{double} \PYG{n}{zyCorrelationAccel} \PYG{o}{=} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{zyAccelInner} \PYG{o}{/} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{zAccelNormSquare}\PYG{p}{;}
+            
+            \PYG{n}{zeroed} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+            
+            \PYG{c+c1}{// Print offsets and correlation coefs}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Offsets: \PYGZpc{}8d, \PYGZpc{}8d, \PYGZpc{}8d, \PYGZpc{}8d, \PYGZpc{}8d, \PYGZpc{}8d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} 
+                    \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{],} 
+                    \PYG{n}{gyroOffset}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{gyroOffset}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{gyroOffset}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]);}
+            \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+            
+\PYG{c+c1}{//            sprintf(strbuffer, \PYGZdq{}Correlation Coefs: \PYGZpc{}8.3f, \PYGZpc{}8.3f, \PYGZpc{}8.3f. \PYGZpc{}8.3f\PYGZbs{}n\PYGZdq{}, }
+\PYG{c+c1}{//                    zxCorrelationAccel, zyCorrelationAccel, }
+\PYG{c+c1}{//                    zxCorrelationGyro, zyCorrelationGyro);}
+            \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Correlation Coefs: \PYGZpc{}8.3f, \PYGZpc{}8.3f}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} 
+                    \PYG{n}{zxCorrelationAccel}\PYG{p}{,} \PYG{n}{zyCorrelationAccel}\PYG{p}{);}
+            \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{zeroed} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{;}
+        
+        \PYG{c+c1}{// Subtract oldest vals from average}
+        \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{accelValAvg}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/} \PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{;}
+            \PYG{n}{gyroValAvg}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{gyroValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/} \PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Get new vals}
+        \PYG{n}{readAccel}\PYG{p}{(}\PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{]);}
+        \PYG{n}{readGyro}\PYG{p}{(}\PYG{n}{gyroValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{]);}
+        
+        \PYG{c+c1}{// Subtract means}
+        \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{];}
+            \PYG{n}{gyroValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{gyroOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{];}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Decorrelate}
+        \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{n}{zxCorrelationAccel}\PYG{p}{;}
+        \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{n}{zyCorrelationAccel}\PYG{p}{;}
+        
+        \PYG{c+c1}{// Add new vals to average}
+        \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{accelValAvg}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/} \PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{;}
+            \PYG{n}{gyroValAvg}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{gyroValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/} \PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Increment buffer counter}
+        \PYG{n}{bufPos} \PYG{o}{=} \PYG{p}{(}\PYG{n}{bufPos} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{;}
+        
+        \PYG{c+c1}{// Read magnetomter}
+        \PYG{n}{readMag}\PYG{p}{(}\PYG{n}{magValAvg}\PYG{p}{);}
+        
+\PYG{c+c1}{//        // Print averages}
+\PYG{c+c1}{//        sprintf(strbuffer, \PYGZdq{}\PYGZpc{}2.1f,\PYGZpc{}2.1f,\PYGZpc{}2.1f,\PYGZpc{}2.1f,\PYGZpc{}2.1f,\PYGZpc{}2.1f\PYGZbs{}n\PYGZdq{}, }
+\PYG{c+c1}{//                accelValAvg[0], accelValAvg[1], accelValAvg[2], }
+\PYG{c+c1}{//                gyroValAvg[0], gyroValAvg[1], gyroValAvg[2]);}
+\PYG{c+c1}{//        sprintf(strbuffer, \PYGZdq{}\PYGZpc{}2.1f,\PYGZpc{}2.1f,\PYGZpc{}2.1f\PYGZbs{}n\PYGZdq{}, }
+\PYG{c+c1}{//                accelValAvg[0], accelValAvg[1], accelValAvg[2]);}
+\PYG{c+c1}{//        UART\PYGZus{}PutString(strbuffer);}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}    
+
+\PYG{k+kt}{void} \PYG{n+nf}{Accel\PYGZus{}getAccel}\PYG{p}{(}\PYG{k+kt}{double} \PYG{o}{*}\PYG{n}{accelData}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{n}{accelData}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{n}{accelValAvg}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{*} \PYG{n}{accelMgLsb}\PYG{p}{;}
+    \PYG{n}{accelData}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{accelValAvg}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{*} \PYG{n}{accelMgLsb}\PYG{p}{;}
+    \PYG{n}{accelData}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{accelValAvg}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{n}{accelMgLsb}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{Accel\PYGZus{}getMag}\PYG{p}{(}\PYG{k+kt}{double} \PYG{o}{*}\PYG{n}{magData}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{n}{magData}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{n}{magValAvg}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{*} \PYG{n}{magMgaussLsb}\PYG{p}{;}
+    \PYG{n}{magData}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{magValAvg}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{*} \PYG{n}{magMgaussLsb}\PYG{p}{;}
+    \PYG{n}{magData}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{magValAvg}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{n}{magMgaussLsb}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+    
+    
+\PYG{k+kt}{void} \PYG{n+nf}{Accel\PYGZus{}getGyro}\PYG{p}{(}\PYG{k+kt}{double} \PYG{o}{*}\PYG{n}{gyroData}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{n}{gyroData}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{n}{gyroValAvg}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{*} \PYG{n}{gyroDpsDigit}\PYG{p}{;}
+    \PYG{n}{gyroData}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{gyroValAvg}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{*} \PYG{n}{gyroDpsDigit}\PYG{p}{;}
+    \PYG{n}{gyroData}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{gyroValAvg}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{n}{gyroDpsDigit}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+
+
+
+\PYG{c+cm}{/***************************************************************************}
+\PYG{c+cm}{ PRIVATE FUNCTIONS}
+\PYG{c+cm}{ ***************************************************************************/}
+
+\PYG{k+kt}{void} \PYG{n+nf}{readAccel}\PYG{p}{(}\PYG{k+kt}{int} \PYG{o}{*}\PYG{n}{accelData}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{c+c1}{// Read the accelerometer}
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{6}\PYG{p}{];}
+	\PYG{n}{readBuffer}\PYG{p}{(}\PYG{n}{XMTYPE}\PYG{p}{,} 
+        \PYG{n}{I2C\PYGZus{}AUTO\PYGZus{}INCREMENT} \PYG{o}{|} \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}X\PYGZus{}L\PYGZus{}A}\PYG{p}{,} 
+		\PYG{l+m+mi}{6}\PYG{p}{,} \PYG{n}{buffer}\PYG{p}{);}
+
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{xlo} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{];}
+	\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{xhi} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{];}
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{ylo} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{];}
+	\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{yhi} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{];}
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{zlo} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{];}
+	\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{zhi} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{];}
+
+	\PYG{c+c1}{// Shift values to create properly formed integer (low byte first)}
+	\PYG{n}{xhi} \PYG{o}{\PYGZlt{}\PYGZlt{}=} \PYG{l+m+mi}{8}\PYG{p}{;} \PYG{n}{xhi} \PYG{o}{|=} \PYG{n}{xlo}\PYG{p}{;}
+	\PYG{n}{yhi} \PYG{o}{\PYGZlt{}\PYGZlt{}=} \PYG{l+m+mi}{8}\PYG{p}{;} \PYG{n}{yhi} \PYG{o}{|=} \PYG{n}{ylo}\PYG{p}{;}
+	\PYG{n}{zhi} \PYG{o}{\PYGZlt{}\PYGZlt{}=} \PYG{l+m+mi}{8}\PYG{p}{;} \PYG{n}{zhi} \PYG{o}{|=} \PYG{n}{zlo}\PYG{p}{;}
+	
+    \PYG{n}{accelData}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{n}{xhi}\PYG{p}{;}
+    \PYG{n}{accelData}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{yhi}\PYG{p}{;}
+    \PYG{n}{accelData}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{zhi}\PYG{p}{;}
+\PYG{c+c1}{//    sprintf(strbuffer, \PYGZdq{}\PYGZpc{}d, \PYGZpc{}d, \PYGZpc{}d\PYGZbs{}n\PYGZdq{}, accelData[0], accelData[1], accelData[2]);}
+\PYG{c+c1}{//    UART\PYGZus{}PutString(strbuffer);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{readMag}\PYG{p}{(}\PYG{k+kt}{int} \PYG{o}{*}\PYG{n}{magData}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{c+c1}{// Read the magnetometer}
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{6}\PYG{p}{];}
+	\PYG{n}{readBuffer}\PYG{p}{(}\PYG{n}{XMTYPE}\PYG{p}{,} 
+        \PYG{n}{I2C\PYGZus{}AUTO\PYGZus{}INCREMENT} \PYG{o}{|} \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}X\PYGZus{}L\PYGZus{}M}\PYG{p}{,} 
+		\PYG{l+m+mi}{6}\PYG{p}{,} \PYG{n}{buffer}\PYG{p}{);}
+
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{xlo} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{];}
+	\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{xhi} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{];}
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{ylo} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{];}
+	\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{yhi} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{];}
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{zlo} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{];}
+	\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{zhi} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{];}
+
+	\PYG{c+c1}{// Shift values to create properly formed integer (low byte first)}
+	\PYG{n}{xhi} \PYG{o}{\PYGZlt{}\PYGZlt{}=} \PYG{l+m+mi}{8}\PYG{p}{;} \PYG{n}{xhi} \PYG{o}{|=} \PYG{n}{xlo}\PYG{p}{;}
+	\PYG{n}{yhi} \PYG{o}{\PYGZlt{}\PYGZlt{}=} \PYG{l+m+mi}{8}\PYG{p}{;} \PYG{n}{yhi} \PYG{o}{|=} \PYG{n}{ylo}\PYG{p}{;}
+	\PYG{n}{zhi} \PYG{o}{\PYGZlt{}\PYGZlt{}=} \PYG{l+m+mi}{8}\PYG{p}{;} \PYG{n}{zhi} \PYG{o}{|=} \PYG{n}{zlo}\PYG{p}{;}
+	
+    \PYG{n}{magData}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{n}{xhi}\PYG{p}{;}
+    \PYG{n}{magData}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{yhi}\PYG{p}{;}
+    \PYG{n}{magData}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{zhi}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{void} \PYG{n+nf}{readGyro}\PYG{p}{(}\PYG{k+kt}{int} \PYG{o}{*}\PYG{n}{gyroData}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+	\PYG{c+c1}{// Read gyro}
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{6}\PYG{p}{];}
+	\PYG{n}{readBuffer}\PYG{p}{(}\PYG{n}{GYROTYPE}\PYG{p}{,} 
+		\PYG{n}{I2C\PYGZus{}AUTO\PYGZus{}INCREMENT} \PYG{o}{|} \PYG{n}{LSM9DS0\PYGZus{}REGISTER\PYGZus{}OUT\PYGZus{}X\PYGZus{}L\PYGZus{}G}\PYG{p}{,} 
+		\PYG{l+m+mi}{6}\PYG{p}{,} \PYG{n}{buffer}\PYG{p}{);}
+
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{xlo} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{];}
+	\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{xhi} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{];}
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{ylo} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{];}
+	\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{yhi} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{];}
+	\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{zlo} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{];}
+	\PYG{k+kt}{int16\PYGZus{}t} \PYG{n}{zhi} \PYG{o}{=} \PYG{n}{buffer}\PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{];}
+
+	\PYG{c+c1}{// Shift values to create properly formed integer (low byte first)}
+	\PYG{n}{xhi} \PYG{o}{\PYGZlt{}\PYGZlt{}=} \PYG{l+m+mi}{8}\PYG{p}{;} \PYG{n}{xhi} \PYG{o}{|=} \PYG{n}{xlo}\PYG{p}{;}
+	\PYG{n}{yhi} \PYG{o}{\PYGZlt{}\PYGZlt{}=} \PYG{l+m+mi}{8}\PYG{p}{;} \PYG{n}{yhi} \PYG{o}{|=} \PYG{n}{ylo}\PYG{p}{;}
+	\PYG{n}{zhi} \PYG{o}{\PYGZlt{}\PYGZlt{}=} \PYG{l+m+mi}{8}\PYG{p}{;} \PYG{n}{zhi} \PYG{o}{|=} \PYG{n}{zlo}\PYG{p}{;}
+
+	\PYG{n}{gyroData}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{n}{xhi}\PYG{p}{;}
+	\PYG{n}{gyroData}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{yhi}\PYG{p}{;}
+	\PYG{n}{gyroData}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{zhi}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{write8}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{type}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{reg}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{value}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{address}\PYG{p}{;}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{type} \PYG{o}{==} \PYG{n}{GYROTYPE}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{address} \PYG{o}{=} \PYG{n}{LSM9DS0\PYGZus{}ADDRESS\PYGZus{}GYRO}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{n}{address} \PYG{o}{=} \PYG{n}{LSM9DS0\PYGZus{}ADDRESS\PYGZus{}ACCELMAG}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{n}{I2C\PYGZus{}MasterSendStart}\PYG{p}{(}\PYG{n}{address}\PYG{p}{,} \PYG{n}{I2C\PYGZus{}WRITE}\PYG{p}{);}
+    \PYG{n}{I2C\PYGZus{}MasterWriteByte}\PYG{p}{(}\PYG{n}{reg}\PYG{p}{);}
+    \PYG{n}{I2C\PYGZus{}MasterWriteByte}\PYG{p}{(}\PYG{n}{value}\PYG{p}{);}
+    \PYG{n}{I2C\PYGZus{}MasterSendStop}\PYG{p}{();}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n+nf}{read8}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{type}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{reg}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{value}\PYG{p}{;}
+
+    \PYG{n}{readBuffer}\PYG{p}{(}\PYG{n}{type}\PYG{p}{,} \PYG{n}{reg}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{,} \PYG{o}{\PYGZam{}}\PYG{n}{value}\PYG{p}{);}
+
+    \PYG{k}{return} \PYG{n}{value}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{static} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n+nf}{readBuffer}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{type}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{reg}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{len}\PYG{p}{,} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{o}{*}\PYG{n}{buffer}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{address}\PYG{p}{;}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{type} \PYG{o}{==} \PYG{n}{GYROTYPE}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{address} \PYG{o}{=} \PYG{n}{LSM9DS0\PYGZus{}ADDRESS\PYGZus{}GYRO}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{n}{address} \PYG{o}{=} \PYG{n}{LSM9DS0\PYGZus{}ADDRESS\PYGZus{}ACCELMAG}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    
+    \PYG{n}{I2C\PYGZus{}MasterSendStart}\PYG{p}{(}\PYG{n}{address}\PYG{p}{,} \PYG{n}{I2C\PYGZus{}WRITE}\PYG{p}{);}
+    \PYG{n}{I2C\PYGZus{}MasterWriteByte}\PYG{p}{(}\PYG{n}{reg}\PYG{p}{);}
+    
+    \PYG{n}{I2C\PYGZus{}MasterSendRestart}\PYG{p}{(}\PYG{n}{address}\PYG{p}{,} \PYG{n}{I2C\PYGZus{}READ}\PYG{p}{);}
+    \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{;}
+    \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{len}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{buffer}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{n}{I2C\PYGZus{}MasterReadByte}\PYG{p}{(}\PYG{n}{I2C\PYGZus{}SEND\PYGZus{}ACK}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{n}{buffer}\PYG{p}{[}\PYG{n}{len}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{=} \PYG{n}{I2C\PYGZus{}MasterReadByte}\PYG{p}{(}\PYG{n}{I2C\PYGZus{}SEND\PYGZus{}NACK}\PYG{p}{);}
+    \PYG{n}{I2C\PYGZus{}MasterSendStop}\PYG{p}{();}
+
+    \PYG{k}{return} \PYG{n}{len}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

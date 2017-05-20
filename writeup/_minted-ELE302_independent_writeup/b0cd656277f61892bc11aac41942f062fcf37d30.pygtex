@@ -1,0 +1,168 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{//}
+\PYG{c+c1}{// begin license header}
+\PYG{c+c1}{//}
+\PYG{c+c1}{// This file is part of Pixy CMUcam5 or \PYGZdq{}Pixy\PYGZdq{} for short}
+\PYG{c+c1}{//}
+\PYG{c+c1}{// All Pixy source code is provided under the terms of the}
+\PYG{c+c1}{// GNU General Public License v2 (http://www.gnu.org/licenses/gpl\PYGZhy{}2.0.html).}
+\PYG{c+c1}{// Those wishing to use Pixy source code, software and/or}
+\PYG{c+c1}{// technologies under different licensing terms should contact us at}
+\PYG{c+c1}{// cmucam@cs.cmu.edu. Such licensing terms are available for}
+\PYG{c+c1}{// all portions of the Pixy codebase presented here.}
+\PYG{c+c1}{//}
+\PYG{c+c1}{// end license header}
+\PYG{c+c1}{//}
+
+\PYG{c+cp}{\PYGZsh{}ifndef \PYGZus{}TPIXY\PYGZus{}H}
+\PYG{c+cp}{\PYGZsh{}define \PYGZus{}TPIXY\PYGZus{}H}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}stdint.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}iostream\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}cstdlib\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}cstring\PYGZgt{}}
+
+\PYG{c+cp}{\PYGZsh{}define PIXY\PYGZus{}INITIAL\PYGZus{}ARRAYSIZE      30}
+\PYG{c+cp}{\PYGZsh{}define PIXY\PYGZus{}MAXIMUM\PYGZus{}ARRAYSIZE      130}
+\PYG{c+cp}{\PYGZsh{}define PIXY\PYGZus{}START\PYGZus{}WORD             0xaa55}
+\PYG{c+cp}{\PYGZsh{}define PIXY\PYGZus{}START\PYGZus{}WORD\PYGZus{}CC          0xaa56}
+\PYG{c+cp}{\PYGZsh{}define PIXY\PYGZus{}START\PYGZus{}WORDX            0x55aa}
+
+\PYG{k}{struct} \PYG{n}{Block} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{void} \PYG{n}{print}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+        \PYG{n}{std}\PYG{o}{::}\PYG{n}{cout} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+s}{\PYGZdq{}sig: \PYGZdq{}} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{signature} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+s}{\PYGZdq{} x: \PYGZdq{}} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{x} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+s}{\PYGZdq{} y: \PYGZdq{}} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{y} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+s}{\PYGZdq{} width: \PYGZdq{}} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{width} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+s}{\PYGZdq{} height: \PYGZdq{}} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{height} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{std}\PYG{o}{::}\PYG{n}{endl}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{signature}\PYG{p}{;}
+    \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{x}\PYG{p}{;}
+    \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{y}\PYG{p}{;}
+    \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{width}\PYG{p}{;}
+    \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{height}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+
+\PYG{k}{template} \PYG{o}{\PYGZlt{}}\PYG{k}{class} \PYG{n+nc}{LinkType}\PYG{o}{\PYGZgt{}} \PYG{k}{class} \PYG{n+nc}{TPixy} \PYG{p}{\PYGZob{}}
+\PYG{k}{public}\PYG{o}{:}
+    \PYG{n}{TPixy}\PYG{p}{(}\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{addr}\PYG{p}{);}
+    \PYG{o}{\PYGZti{}}\PYG{n}{TPixy}\PYG{p}{();}
+
+    \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n+nf}{getBlocks}\PYG{p}{(}\PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{maxBlocks} \PYG{o}{=} \PYG{l+m+mi}{1000}\PYG{p}{);}
+    \PYG{k+kt}{int8\PYGZus{}t} \PYG{n+nf}{setServos}\PYG{p}{(}\PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{s0}\PYG{p}{,} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{s1}\PYG{p}{);}
+    \PYG{n}{LinkType} \PYG{n+nf}{getLink}\PYG{p}{();}
+
+    \PYG{n}{Block} \PYG{o}{*}\PYG{n}{blocks}\PYG{p}{;}
+
+\PYG{k}{private}\PYG{o}{:}
+    \PYG{k+kt}{bool} \PYG{n}{getStart}\PYG{p}{();}
+    \PYG{k+kt}{void} \PYG{n+nf}{resize}\PYG{p}{();}
+
+    \PYG{n}{LinkType} \PYG{n}{link}\PYG{p}{;}
+    \PYG{k+kt}{bool} \PYG{n}{skipStart}\PYG{p}{;}
+    \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{blockCount}\PYG{p}{;}
+    \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{blockArraySize}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+
+
+\PYG{k}{template} \PYG{o}{\PYGZlt{}}\PYG{k}{class} \PYG{n+nc}{LinkType}\PYG{o}{\PYGZgt{}} \PYG{n}{TPixy}\PYG{o}{\PYGZlt{}}\PYG{n}{LinkType}\PYG{o}{\PYGZgt{}::}\PYG{n}{TPixy}\PYG{p}{(}\PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{addr}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{skipStart} \PYG{o}{=} \PYG{n+nb}{false}\PYG{p}{;}
+    \PYG{n}{blockCount} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{n}{blockArraySize} \PYG{o}{=} \PYG{n}{PIXY\PYGZus{}INITIAL\PYGZus{}ARRAYSIZE}\PYG{p}{;}
+    \PYG{n}{blocks} \PYG{o}{=} \PYG{p}{(}\PYG{n}{Block} \PYG{o}{*}\PYG{p}{)}\PYG{n}{malloc}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{Block}\PYG{p}{)} \PYG{o}{*} \PYG{n}{blockArraySize}\PYG{p}{);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{link}\PYG{p}{.}\PYG{n}{init}\PYG{p}{(}\PYG{n}{addr}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{std}\PYG{o}{::}\PYG{n}{cerr} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+s}{\PYGZdq{}Could not initialize I2C with address \PYGZdq{}} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{addr} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{std}\PYG{o}{::}\PYG{n}{endl}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{template} \PYG{o}{\PYGZlt{}}\PYG{k}{class} \PYG{n+nc}{LinkType}\PYG{o}{\PYGZgt{}} \PYG{n}{TPixy}\PYG{o}{\PYGZlt{}}\PYG{n}{LinkType}\PYG{o}{\PYGZgt{}::\PYGZti{}}\PYG{n}{TPixy}\PYG{p}{()}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{free}\PYG{p}{(}\PYG{n}{blocks}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{template} \PYG{o}{\PYGZlt{}}\PYG{k}{class} \PYG{n+nc}{LinkType}\PYG{o}{\PYGZgt{}} \PYG{k+kt}{bool} \PYG{n}{TPixy}\PYG{o}{\PYGZlt{}}\PYG{n}{LinkType}\PYG{o}{\PYGZgt{}::}\PYG{n}{getStart}\PYG{p}{()}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{w}\PYG{p}{,} \PYG{n}{lastw}\PYG{p}{;}
+
+    \PYG{n}{lastw} \PYG{o}{=} \PYG{l+m+mh}{0xffff}\PYG{p}{;}
+
+    \PYG{k}{while}\PYG{p}{(}\PYG{n+nb}{true}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{w} \PYG{o}{=} \PYG{n}{link}\PYG{p}{.}\PYG{n}{getWord}\PYG{p}{();}
+
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{w} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{lastw} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{n+nb}{false}\PYG{p}{;} \PYG{c+c1}{// no data: return immediately}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{w} \PYG{o}{==} \PYG{n}{PIXY\PYGZus{}START\PYGZus{}WORD} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{lastw} \PYG{o}{==} \PYG{n}{PIXY\PYGZus{}START\PYGZus{}WORD}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{n+nb}{true}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{w} \PYG{o}{==} \PYG{n}{PIXY\PYGZus{}START\PYGZus{}WORDX}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{std}\PYG{o}{::}\PYG{n}{cerr} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+s}{\PYGZdq{}Out of sync\PYGZdq{}} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{std}\PYG{o}{::}\PYG{n}{endl}\PYG{p}{;}
+            \PYG{n}{link}\PYG{p}{.}\PYG{n}{getByte}\PYG{p}{();} \PYG{c+c1}{// resync}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{n}{lastw} \PYG{o}{=} \PYG{n}{w}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{template} \PYG{o}{\PYGZlt{}}\PYG{k}{class} \PYG{n+nc}{LinkType}\PYG{o}{\PYGZgt{}} \PYG{k+kt}{void} \PYG{n}{TPixy}\PYG{o}{\PYGZlt{}}\PYG{n}{LinkType}\PYG{o}{\PYGZgt{}::}\PYG{n}{resize}\PYG{p}{()}
+\PYG{p}{\PYGZob{}}
+    \PYG{n}{Block} \PYG{o}{*}\PYG{n}{newBlocks}\PYG{p}{;}
+    \PYG{n}{blockArraySize} \PYG{o}{+=} \PYG{n}{PIXY\PYGZus{}INITIAL\PYGZus{}ARRAYSIZE}\PYG{p}{;}
+    \PYG{n}{newBlocks} \PYG{o}{=} \PYG{p}{(}\PYG{n}{Block} \PYG{o}{*}\PYG{p}{)}\PYG{n}{malloc}\PYG{p}{(}\PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{Block}\PYG{p}{)} \PYG{o}{*} \PYG{n}{blockArraySize}\PYG{p}{);}
+    \PYG{n}{memcpy}\PYG{p}{(}\PYG{n}{newBlocks}\PYG{p}{,} \PYG{n}{blocks}\PYG{p}{,} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{Block}\PYG{p}{)}\PYG{o}{*}\PYG{n}{blockCount}\PYG{p}{);}
+    \PYG{n}{free}\PYG{p}{(}\PYG{n}{blocks}\PYG{p}{);}
+    \PYG{n}{blocks} \PYG{o}{=} \PYG{n}{newBlocks}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{template} \PYG{o}{\PYGZlt{}}\PYG{k}{class} \PYG{n+nc}{LinkType}\PYG{o}{\PYGZgt{}} \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{TPixy}\PYG{o}{\PYGZlt{}}\PYG{n}{LinkType}\PYG{o}{\PYGZgt{}::}\PYG{n}{getBlocks}\PYG{p}{(}\PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{maxBlocks}\PYG{p}{)}
+\PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{i}\PYG{p}{;}
+    \PYG{k+kt}{uint16\PYGZus{}t} \PYG{n}{w}\PYG{p}{,} \PYG{n}{checksum}\PYG{p}{,} \PYG{n}{sum}\PYG{p}{;}
+    \PYG{n}{Block} \PYG{o}{*}\PYG{n}{block}\PYG{p}{;}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{n}{skipStart}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{getStart}\PYG{p}{()} \PYG{o}{==} \PYG{n+nb}{false}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+        \PYG{n}{skipStart} \PYG{o}{=} \PYG{n+nb}{false}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{for} \PYG{p}{(}\PYG{n}{blockCount} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{blockCount} \PYG{o}{\PYGZlt{}} \PYG{n}{maxBlocks} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{blockCount} \PYG{o}{\PYGZlt{}} \PYG{n}{PIXY\PYGZus{}MAXIMUM\PYGZus{}ARRAYSIZE}\PYG{p}{;)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{checksum} \PYG{o}{=} \PYG{n}{link}\PYG{p}{.}\PYG{n}{getWord}\PYG{p}{();}
+
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{checksum} \PYG{o}{==} \PYG{n}{PIXY\PYGZus{}START\PYGZus{}WORD}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{c+c1}{// we\PYGZsq{}ve reached the beginning of the next frame}
+            \PYG{n}{skipStart} \PYG{o}{=} \PYG{n+nb}{true}\PYG{p}{;}
+            \PYG{k}{return} \PYG{n}{blockCount}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{checksum} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{n}{blockCount}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{blockCount} \PYG{o}{\PYGZgt{}} \PYG{n}{blockArraySize}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{resize}\PYG{p}{();}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{n}{block} \PYG{o}{=} \PYG{n}{blocks} \PYG{o}{+} \PYG{n}{blockCount}\PYG{p}{;}
+
+        \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{sum} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{k}{sizeof}\PYG{p}{(}\PYG{n}{Block}\PYG{p}{)} \PYG{o}{/} \PYG{k}{sizeof}\PYG{p}{(}\PYG{k+kt}{uint16\PYGZus{}t}\PYG{p}{);} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{w} \PYG{o}{=} \PYG{n}{link}\PYG{p}{.}\PYG{n}{getWord}\PYG{p}{();}
+            \PYG{n}{sum} \PYG{o}{+=} \PYG{n}{w}\PYG{p}{;}
+            \PYG{o}{*}\PYG{p}{((}\PYG{k+kt}{uint16\PYGZus{}t} \PYG{o}{*}\PYG{p}{)}\PYG{n}{block} \PYG{o}{+} \PYG{n}{i}\PYG{p}{)} \PYG{o}{=} \PYG{n}{w}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{checksum} \PYG{o}{==} \PYG{n}{sum}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{blockCount}\PYG{o}{++}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{p}{\PYGZob{}}
+            \PYG{n}{std}\PYG{o}{::}\PYG{n}{cerr} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+s}{\PYGZdq{}Checksum error\PYGZdq{}} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{n}{std}\PYG{o}{::}\PYG{n}{endl}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{n}{w} \PYG{o}{=} \PYG{n}{link}\PYG{p}{.}\PYG{n}{getWord}\PYG{p}{();}
+
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{w} \PYG{o}{!=} \PYG{n}{PIXY\PYGZus{}START\PYGZus{}WORD}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{n}{blockCount}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k}{template} \PYG{o}{\PYGZlt{}}\PYG{k}{class} \PYG{n+nc}{LinkType}\PYG{o}{\PYGZgt{}} \PYG{n}{LinkType} \PYG{n}{TPixy}\PYG{o}{\PYGZlt{}}\PYG{n}{LinkType}\PYG{o}{\PYGZgt{}::}\PYG{n}{getLink}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{k}{return} \PYG{n}{link}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cp}{\PYGZsh{}endif}
+\end{Verbatim}

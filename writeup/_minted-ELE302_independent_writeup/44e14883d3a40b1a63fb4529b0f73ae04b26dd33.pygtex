@@ -1,0 +1,31 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/******************************************************************************}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ * Adapted from StackOverflow post:}
+\PYG{c+cm}{ *   stackoverflow.com/questions/14676730/clock\PYGZhy{}gettime\PYGZhy{}on\PYGZhy{}raspberry\PYGZhy{}pi\PYGZhy{}with\PYGZhy{}c}
+\PYG{c+cm}{ * Written by Yosh Kemu}
+\PYG{c+cm}{ * Adapted by Byung\PYGZhy{}Cheol Cho}
+\PYG{c+cm}{ *}
+\PYG{c+cm}{ ******************************************************************************/}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}sys/time.h\PYGZgt{}}
+
+\PYG{k}{typedef} \PYG{k}{struct} \PYG{p}{\PYGZob{}}
+    \PYG{k}{struct} \PYG{n}{timeval} \PYG{n}{startTimeVal}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}} \PYG{n}{timer\PYGZus{}obj}\PYG{p}{;}
+
+\PYG{k+kt}{void} \PYG{n+nf}{timer\PYGZus{}start}\PYG{p}{(}\PYG{n}{timer\PYGZus{}obj}\PYG{o}{*} \PYG{n}{ctx}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{n}{gettimeofday}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{ctx}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{startTimeVal}\PYG{p}{,} \PYG{n+nb}{NULL}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{k+kt}{double} \PYG{n+nf}{timer\PYGZus{}elapsed}\PYG{p}{(}\PYG{n}{timer\PYGZus{}obj}\PYG{o}{*} \PYG{n}{ctx}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// Get current time}
+    \PYG{k}{struct} \PYG{n}{timeval} \PYG{n}{nowTimeVal}\PYG{p}{;}
+    \PYG{n}{gettimeofday}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{nowTimeVal}\PYG{p}{,} \PYG{n+nb}{NULL}\PYG{p}{);}
+
+    \PYG{c+c1}{// Compute difference}
+    \PYG{k}{return} \PYG{l+m+mf}{1.0} \PYG{o}{*} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{p}{(}\PYG{n}{nowTimeVal}\PYG{p}{.}\PYG{n}{tv\PYGZus{}sec} \PYG{o}{\PYGZhy{}} \PYG{n}{ctx}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{startTimeVal}\PYG{p}{.}\PYG{n}{tv\PYGZus{}sec}\PYG{p}{)} \PYG{o}{+}
+        \PYG{p}{((}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{nowTimeVal}\PYG{p}{.}\PYG{n}{tv\PYGZus{}usec} \PYG{o}{\PYGZhy{}}
+         \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{ctx}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{startTimeVal}\PYG{p}{.}\PYG{n}{tv\PYGZus{}usec}\PYG{p}{)} \PYG{o}{/} \PYG{l+m+mf}{1E6}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

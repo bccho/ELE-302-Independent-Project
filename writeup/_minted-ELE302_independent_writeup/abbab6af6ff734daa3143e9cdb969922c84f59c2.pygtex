@@ -1,0 +1,518 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}cstdio\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}cmath\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}algorithm\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}queue\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}deque\PYGZgt{}}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}armadillo\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}wiringSerial.h\PYGZgt{}}
+
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}timer.h\PYGZgt{}}
+\PYG{c+cp}{\PYGZsh{}include} \PYG{c+cpf}{\PYGZlt{}Pixy.h\PYGZgt{}}
+
+\PYG{k}{struct} \PYG{n}{Point3D} \PYG{p}{\PYGZob{}}
+    \PYG{k}{private}\PYG{o}{:}
+        \PYG{k+kt}{double} \PYG{n}{x}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{y}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{z}\PYG{p}{;}
+        \PYG{k+kt}{double} \PYG{n}{t}\PYG{p}{;}
+    \PYG{k}{public}\PYG{o}{:}
+        \PYG{c+cm}{/* Constructors */}
+        \PYG{n}{Point3D}\PYG{p}{()} \PYG{o}{:}
+            \PYG{n}{x}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{),} \PYG{n}{y}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{),} \PYG{n}{z}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{),} \PYG{n}{t}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+        \PYG{n}{Point3D}\PYG{p}{(}\PYG{k+kt}{double} \PYG{n}{\PYGZus{}x}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{\PYGZus{}y}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{\PYGZus{}z}\PYG{p}{)} \PYG{o}{:}
+            \PYG{n}{x}\PYG{p}{(}\PYG{n}{\PYGZus{}x}\PYG{p}{),} \PYG{n}{y}\PYG{p}{(}\PYG{n}{\PYGZus{}y}\PYG{p}{),} \PYG{n}{z}\PYG{p}{(}\PYG{n}{\PYGZus{}z}\PYG{p}{),} \PYG{n}{t}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+        \PYG{n}{Point3D}\PYG{p}{(}\PYG{k+kt}{double} \PYG{n}{\PYGZus{}x}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{\PYGZus{}y}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{\PYGZus{}z}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{\PYGZus{}t}\PYG{p}{)} \PYG{o}{:}
+            \PYG{n}{x}\PYG{p}{(}\PYG{n}{\PYGZus{}x}\PYG{p}{),} \PYG{n}{y}\PYG{p}{(}\PYG{n}{\PYGZus{}y}\PYG{p}{),} \PYG{n}{z}\PYG{p}{(}\PYG{n}{\PYGZus{}z}\PYG{p}{),} \PYG{n}{t}\PYG{p}{(}\PYG{n}{\PYGZus{}t}\PYG{p}{)} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+        \PYG{c+cm}{/* Getters */}
+        \PYG{k+kt}{double} \PYG{n+nf}{getX}\PYG{p}{()} \PYG{p}{\PYGZob{}} \PYG{k}{return} \PYG{n}{x}\PYG{p}{;} \PYG{p}{\PYGZcb{}}
+        \PYG{k+kt}{double} \PYG{n+nf}{getY}\PYG{p}{()} \PYG{p}{\PYGZob{}} \PYG{k}{return} \PYG{n}{y}\PYG{p}{;} \PYG{p}{\PYGZcb{}}
+        \PYG{k+kt}{double} \PYG{n+nf}{getZ}\PYG{p}{()} \PYG{p}{\PYGZob{}} \PYG{k}{return} \PYG{n}{z}\PYG{p}{;} \PYG{p}{\PYGZcb{}}
+        \PYG{k+kt}{double} \PYG{n+nf}{getT}\PYG{p}{()} \PYG{p}{\PYGZob{}} \PYG{k}{return} \PYG{n}{t}\PYG{p}{;} \PYG{p}{\PYGZcb{}}
+
+        \PYG{c+cm}{/* Operator overloads */}
+        \PYG{c+c1}{// Addition and subtraction}
+        \PYG{n}{Point3D} \PYG{k}{operator}\PYG{o}{+}\PYG{p}{(}\PYG{k}{const} \PYG{n}{Point3D}\PYG{o}{\PYGZam{}} \PYG{n}{p}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{n}{Point3D}\PYG{p}{(}\PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{x} \PYG{o}{+} \PYG{n}{p}\PYG{p}{.}\PYG{n}{x}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{y} \PYG{o}{+} \PYG{n}{p}\PYG{p}{.}\PYG{n}{y}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{z} \PYG{o}{+} \PYG{n}{p}\PYG{p}{.}\PYG{n}{z}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t} \PYG{o}{+} \PYG{n}{p}\PYG{p}{.}\PYG{n}{t}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{n}{Point3D} \PYG{k}{operator}\PYG{o}{\PYGZhy{}}\PYG{p}{(}\PYG{k}{const} \PYG{n}{Point3D}\PYG{o}{\PYGZam{}} \PYG{n}{p}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{n}{Point3D}\PYG{p}{(}\PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{x} \PYG{o}{\PYGZhy{}} \PYG{n}{p}\PYG{p}{.}\PYG{n}{x}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{y} \PYG{o}{\PYGZhy{}} \PYG{n}{p}\PYG{p}{.}\PYG{n}{y}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{z} \PYG{o}{\PYGZhy{}} \PYG{n}{p}\PYG{p}{.}\PYG{n}{z}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t} \PYG{o}{\PYGZhy{}} \PYG{n}{p}\PYG{p}{.}\PYG{n}{t}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// Scalar multiplication and division}
+        \PYG{n}{Point3D} \PYG{k}{operator}\PYG{o}{*}\PYG{p}{(}\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{s}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{n}{Point3D}\PYG{p}{(}\PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{x} \PYG{o}{*} \PYG{n}{s}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{y} \PYG{o}{*} \PYG{n}{s}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{z} \PYG{o}{*} \PYG{n}{s}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t} \PYG{o}{*} \PYG{n}{s}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{n}{Point3D} \PYG{k}{operator}\PYG{o}{/}\PYG{p}{(}\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{s}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{n}{Point3D}\PYG{p}{(}\PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{x} \PYG{o}{/} \PYG{n}{s}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{y} \PYG{o}{/} \PYG{n}{s}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{z} \PYG{o}{/} \PYG{n}{s}\PYG{p}{,} \PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{t} \PYG{o}{/} \PYG{n}{s}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{c+cm}{/* Methods */}
+        \PYG{k+kt}{double} \PYG{n}{maxAbsSpatial}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{double} \PYG{n}{abs\PYGZus{}x} \PYG{o}{=} \PYG{n}{std}\PYG{o}{::}\PYG{n}{abs}\PYG{p}{(}\PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{x}\PYG{p}{);}
+            \PYG{k+kt}{double} \PYG{n}{abs\PYGZus{}y} \PYG{o}{=} \PYG{n}{std}\PYG{o}{::}\PYG{n}{abs}\PYG{p}{(}\PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{y}\PYG{p}{);}
+            \PYG{k+kt}{double} \PYG{n}{abs\PYGZus{}z} \PYG{o}{=} \PYG{n}{std}\PYG{o}{::}\PYG{n}{abs}\PYG{p}{(}\PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{z}\PYG{p}{);}
+            \PYG{k}{return} \PYG{n}{std}\PYG{o}{::}\PYG{n}{max}\PYG{p}{(}\PYG{n}{std}\PYG{o}{::}\PYG{n}{max}\PYG{p}{(}\PYG{n}{abs\PYGZus{}x}\PYG{p}{,} \PYG{n}{abs\PYGZus{}y}\PYG{p}{),} \PYG{n}{abs\PYGZus{}z}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k+kt}{double} \PYG{n}{distTo}\PYG{p}{(}\PYG{n}{Point3D}\PYG{o}{\PYGZam{}} \PYG{n}{p}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{p}{(}\PYG{n}{p} \PYG{o}{\PYGZhy{}} \PYG{o}{*}\PYG{k}{this}\PYG{p}{).}\PYG{n}{norm}\PYG{p}{();}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{k+kt}{double} \PYG{n}{norm}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+            \PYG{k}{return} \PYG{n}{std}\PYG{o}{::}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{x}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{+}
+                    \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{y}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{+}
+                    \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{k}{this}\PYG{o}{\PYGZhy{}\PYGZgt{}}\PYG{n}{z}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{));}
+        \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{};}
+
+\PYG{k}{enum} \PYG{n}{ball\PYGZus{}state} \PYG{p}{\PYGZob{}} \PYG{n}{waiting} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{falling} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{bounced} \PYG{o}{=} \PYG{l+m+mi}{2} \PYG{p}{\PYGZcb{};}
+
+\PYG{c+cm}{/* Constants */}
+\PYG{c+c1}{// I2C}
+\PYG{k}{const} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{ADDR0} \PYG{o}{=} \PYG{l+m+mh}{0x54}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{uint8\PYGZus{}t} \PYG{n}{ADDR1} \PYG{o}{=} \PYG{l+m+mh}{0x55}\PYG{p}{;}
+
+\PYG{c+c1}{// Camera intrinsics}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{fx} \PYG{o}{=} \PYG{l+m+mf}{218.75}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{fy} \PYG{o}{=} \PYG{l+m+mi}{215}\PYG{p}{;} \PYG{c+c1}{// originally calibrated to 210}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{cx} \PYG{o}{=} \PYG{l+m+mi}{160}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{cy} \PYG{o}{=} \PYG{l+m+mi}{100}\PYG{p}{;} \PYG{c+c1}{// need to recalibrate; cy = 92 when fy = 215}
+
+\PYG{c+c1}{// Physical parameters}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{CAM\PYGZus{}HOR\PYGZus{}SEP} \PYG{o}{=} \PYG{l+m+mf}{8.5} \PYG{o}{*} \PYG{l+m+mf}{25.4}\PYG{p}{;} \PYG{c+c1}{// camera horizontal separation}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{CAM\PYGZus{}HEIGHT} \PYG{o}{=} \PYG{l+m+mi}{260}\PYG{p}{;} \PYG{c+c1}{// height of camera center from ground}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{PADDLE\PYGZus{}X} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{230}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{PADDLE\PYGZus{}Y} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{130}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{PADDLE\PYGZus{}Z} \PYG{o}{=} \PYG{o}{+}\PYG{l+m+mi}{110}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{BALL\PYGZus{}DIAM} \PYG{o}{=} \PYG{l+m+mf}{1.5} \PYG{o}{*} \PYG{l+m+mf}{25.4}\PYG{p}{;} \PYG{c+c1}{// diameter of ball}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{COEF\PYGZus{}REST} \PYG{o}{=} \PYG{l+m+mf}{0.5}\PYG{p}{;} \PYG{c+c1}{// coefficient of restitution}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{G\PYGZus{}ACC} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{9.8}\PYG{p}{;} \PYG{c+c1}{// gravitational field strength}
+
+\PYG{c+c1}{// Trajectory prediction}
+\PYG{k}{const} \PYG{k+kt}{int} \PYG{n}{MIN\PYGZus{}REGRESSION\PYGZus{}POINTS} \PYG{o}{=} \PYG{l+m+mi}{4}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{int} \PYG{n}{MAX\PYGZus{}REGRESSION\PYGZus{}POINTS} \PYG{o}{=} \PYG{l+m+mi}{100}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{int} \PYG{n}{NUM\PYGZus{}REGRESSION\PYGZus{}POINTS} \PYG{o}{=} \PYG{l+m+mi}{10}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{int} \PYG{n}{NUM\PYGZus{}COEF\PYGZus{}REST\PYGZus{}POINTS} \PYG{o}{=} \PYG{l+m+mi}{20}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{MIN\PYGZus{}COEF\PYGZus{}REST} \PYG{o}{=} \PYG{l+m+mf}{0.2}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{MAX\PYGZus{}COEF\PYGZus{}REST} \PYG{o}{=} \PYG{l+m+mf}{0.8}\PYG{p}{;}
+
+\PYG{c+c1}{// Validation}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{SIZE\PYGZus{}TOL} \PYG{o}{=} \PYG{l+m+mi}{2}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{Z\PYGZus{}MAX} \PYG{o}{=} \PYG{l+m+mi}{2000}\PYG{p}{;}
+\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{MAX\PYGZus{}POS\PYGZus{}DIFF} \PYG{o}{=} \PYG{l+m+mi}{50}\PYG{p}{;} \PYG{c+c1}{// mm}
+\PYG{k}{const} \PYG{k+kt}{int} \PYG{n}{MAX\PYGZus{}MISSES} \PYG{o}{=} \PYG{l+m+mi}{3}\PYG{p}{;}
+
+\PYG{c+cm}{/* Global variables */}
+\PYG{c+c1}{// General execution}
+\PYG{k+kt}{int} \PYG{n}{verbose} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{c+c1}{// higher values = more verbose}
+\PYG{c+c1}{// Estimates of x/y/z kinematic parameters}
+\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{beta\PYGZus{}x}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{);} \PYG{c+c1}{// [0] = offset x(0), [1] = vx(0)}
+\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{beta\PYGZus{}y}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{);} \PYG{c+c1}{// [0] = offset y(0), [1] = vy(0)}
+\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{beta\PYGZus{}z}\PYG{p}{(}\PYG{l+m+mi}{3}\PYG{p}{);} \PYG{c+c1}{// [0] = offset z(0), [1] = vz(0), [2] = acceleration g}
+\PYG{k+kt}{double} \PYG{n}{beta\PYGZus{}R} \PYG{o}{=} \PYG{n}{COEF\PYGZus{}REST}\PYG{p}{;}
+\PYG{k+kt}{int} \PYG{n}{numMisses} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+\PYG{n}{ball\PYGZus{}state} \PYG{n}{state} \PYG{o}{=} \PYG{n}{waiting}\PYG{p}{;}
+
+\PYG{c+cm}{/* Helper functions */}
+\PYG{c+c1}{// Predict time when ball will first bounce}
+\PYG{c+c1}{//   bz: 3\PYGZhy{}vector, z coefficients for naive kinematic fit}
+\PYG{k+kt}{double} \PYG{n+nf}{predictBounceTime}\PYG{p}{(}\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{bz}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{z0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// Solves quadratic equation}
+    \PYG{c+c1}{//   z(t) = z(0) + vz(0) t + 0.5 g t\PYGZca{}2 = 0}
+    \PYG{k+kt}{double} \PYG{n}{g} \PYG{o}{=} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{2}\PYG{p}{;} \PYG{c+c1}{// G\PYGZus{}ACC * 1000;}
+    \PYG{k}{return} \PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{1.0} \PYG{o}{/} \PYG{n}{g}\PYG{p}{)} \PYG{o}{*} \PYG{p}{(}\PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{+} \PYG{n}{std}\PYG{o}{::}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{),} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{2} \PYG{o}{*} \PYG{n}{g} \PYG{o}{*} \PYG{p}{(}\PYG{n}{z0} \PYG{o}{\PYGZhy{}} \PYG{n}{BALL\PYGZus{}DIAM} \PYG{o}{/} \PYG{l+m+mi}{2}\PYG{p}{)));}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+c1}{// Predict location of first bounce}
+\PYG{c+c1}{//   bx, by, bz: vectors of length 2, 2, 3 respectively;}
+\PYG{c+c1}{//               coefficients of naive kinematic fit}
+\PYG{c+c1}{//   pt1: position of ball at time 0; point on which bx, by, bz are based}
+\PYG{n}{Point3D} \PYG{n+nf}{predictBounceLocation}\PYG{p}{(}\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{bx}\PYG{p}{,} \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{by}\PYG{p}{,} \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{bz}\PYG{p}{,}
+        \PYG{n}{Point3D}\PYG{o}{\PYGZam{}} \PYG{n}{pt1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}bounce} \PYG{o}{=} \PYG{n}{predictBounceTime}\PYG{p}{(}\PYG{n}{bz}\PYG{p}{,} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{());}
+    \PYG{k+kt}{double} \PYG{n}{newx} \PYG{o}{=} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getX}\PYG{p}{()} \PYG{o}{+} \PYG{n}{bx}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}bounce}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{newy} \PYG{o}{=} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getY}\PYG{p}{()} \PYG{o}{+} \PYG{n}{by}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}bounce}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{newz} \PYG{o}{=} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{()} \PYG{o}{+} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}bounce}
+        \PYG{o}{+} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{*} \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{t\PYGZus{}bounce}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{);}
+
+    \PYG{k}{return} \PYG{n}{Point3D}\PYG{p}{(}\PYG{n}{newx}\PYG{p}{,} \PYG{n}{newy}\PYG{p}{,} \PYG{n}{newz}\PYG{p}{,} \PYG{n}{t\PYGZus{}bounce}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+c1}{// Predict position of ball at time t, using the bouncing ball model}
+\PYG{c+c1}{// (handles up to one bounce)}
+\PYG{c+c1}{//   bx, by, bz: vectors of length 2, 2, 3 respectively;}
+\PYG{c+c1}{//               coefficients of naive kinematic fit}
+\PYG{c+c1}{//   pt1: position of ball at time 0; point on which bx, by, bz are based}
+\PYG{n}{Point3D} \PYG{n+nf}{predictPosition}\PYG{p}{(}\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{bx}\PYG{p}{,} \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{by}\PYG{p}{,} \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{bz}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{bR}\PYG{p}{,}
+        \PYG{n}{Point3D}\PYG{o}{\PYGZam{}} \PYG{n}{pt1}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{t}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{double} \PYG{n}{g} \PYG{o}{=} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{2}\PYG{p}{;} \PYG{c+c1}{// G\PYGZus{}ACC * 1000; // bz(2) * 2}
+    \PYG{k+kt}{double} \PYG{n}{newx} \PYG{o}{=} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getX}\PYG{p}{()} \PYG{o}{+} \PYG{n}{bx}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{p}{(}\PYG{n}{t} \PYG{o}{\PYGZhy{}} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{());}
+    \PYG{k+kt}{double} \PYG{n}{newy} \PYG{o}{=} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getY}\PYG{p}{()} \PYG{o}{+} \PYG{n}{by}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{p}{(}\PYG{n}{t} \PYG{o}{\PYGZhy{}} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{());}
+    \PYG{k+kt}{double} \PYG{n}{newz} \PYG{o}{=} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{()} \PYG{o}{+} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{p}{(}\PYG{n}{t} \PYG{o}{\PYGZhy{}} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{())}
+        \PYG{o}{+} \PYG{l+m+mf}{0.5} \PYG{o}{*} \PYG{n}{g} \PYG{o}{*} \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{t} \PYG{o}{\PYGZhy{}} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{(),} \PYG{l+m+mi}{2}\PYG{p}{);}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{newz} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{c+c1}{// the ball will have bounced}
+        \PYG{c+c1}{// Calculate the time of the first bounce}
+        \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}bounce} \PYG{o}{=} \PYG{n}{predictBounceTime}\PYG{p}{(}\PYG{n}{bz}\PYG{p}{,} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{())} \PYG{o}{+} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{();}
+        \PYG{c+c1}{// Calculate z velocity at time of bounce}
+        \PYG{k+kt}{double} \PYG{n}{vz} \PYG{o}{=} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{+} \PYG{n}{g} \PYG{o}{*} \PYG{p}{(}\PYG{n}{t\PYGZus{}bounce} \PYG{o}{\PYGZhy{}} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{());}
+        \PYG{c+c1}{// New z velocity after bounce}
+        \PYG{n}{vz} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{n}{std}\PYG{o}{::}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{bR}\PYG{p}{)} \PYG{o}{*} \PYG{n}{vz}\PYG{p}{;}
+        \PYG{n}{newz} \PYG{o}{=} \PYG{l+m+mi}{0} \PYG{o}{+} \PYG{n}{vz} \PYG{o}{*} \PYG{p}{(}\PYG{n}{t} \PYG{o}{\PYGZhy{}} \PYG{n}{t\PYGZus{}bounce}\PYG{p}{)} \PYG{o}{+} \PYG{l+m+mf}{0.5} \PYG{o}{*} \PYG{n}{g} \PYG{o}{*} \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{t} \PYG{o}{\PYGZhy{}} \PYG{n}{t\PYGZus{}bounce}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{n}{Point3D}\PYG{p}{(}\PYG{n}{newx}\PYG{p}{,} \PYG{n}{newy}\PYG{p}{,} \PYG{n}{newz}\PYG{p}{,} \PYG{n}{t}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+c1}{// Predict time and location that the ball will reach a given height (if it will),}
+\PYG{c+c1}{// \PYGZus{}after\PYGZus{} the first bounce, then returns the point that the robot should move to.}
+\PYG{c+c1}{//   bx, by, bz: vectors of length 2, 2, 3 respectively;}
+\PYG{c+c1}{//               coefficients of naive kinematic fit}
+\PYG{c+c1}{//   pt1: position of ball at time 0; point on which bx, by, bz are based}
+\PYG{c+c1}{//   height: target height of ball}
+\PYG{n}{Point3D} \PYG{n+nf}{predictLocationGoto}\PYG{p}{(}\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{bx}\PYG{p}{,} \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{by}\PYG{p}{,} \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{bz}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{bR}\PYG{p}{,}
+        \PYG{n}{Point3D}\PYG{o}{\PYGZam{}} \PYG{n}{pt1}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{height}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// time of bounce}
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}bounce} \PYG{o}{=} \PYG{n}{predictBounceTime}\PYG{p}{(}\PYG{n}{bz}\PYG{p}{,} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{());}
+    \PYG{c+c1}{// z velocity before bounce}
+    \PYG{k+kt}{double} \PYG{n}{z\PYGZus{}vel\PYGZus{}orig} \PYG{o}{=} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{+} \PYG{l+m+mi}{2} \PYG{o}{*} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{*} \PYG{p}{(}\PYG{n}{t\PYGZus{}bounce} \PYG{o}{\PYGZhy{}} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{());}
+    \PYG{c+c1}{// z velocity after bounce}
+    \PYG{k+kt}{double} \PYG{n}{z\PYGZus{}vel\PYGZus{}new} \PYG{o}{=} \PYG{n}{z\PYGZus{}vel\PYGZus{}orig} \PYG{o}{*} \PYG{n}{std}\PYG{o}{::}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{bR}\PYG{p}{);}
+    \PYG{c+c1}{// times for ball at target height}
+    \PYG{k+kt}{double} \PYG{n}{discr} \PYG{o}{=} \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{z\PYGZus{}vel\PYGZus{}new}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)}
+        \PYG{o}{+} \PYG{l+m+mi}{4} \PYG{o}{*} \PYG{n}{height} \PYG{o}{*} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{);} \PYG{c+c1}{// discriminant of quadratic formula}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{discr} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{c+c1}{// will not reach this height}
+        \PYG{c+c1}{// so just drive to landing location}
+        \PYG{n}{Point3D} \PYG{n}{ptLand} \PYG{o}{=} \PYG{n}{predictBounceLocation}\PYG{p}{(}\PYG{n}{bx}\PYG{p}{,} \PYG{n}{by}\PYG{p}{,} \PYG{n}{bz}\PYG{p}{,} \PYG{n}{pt1}\PYG{p}{);}
+        \PYG{k}{return} \PYG{n}{ptLand} \PYG{o}{\PYGZhy{}} \PYG{n}{Point3D}\PYG{p}{(}\PYG{n}{PADDLE\PYGZus{}X}\PYG{p}{,} \PYG{n}{PADDLE\PYGZus{}Y}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}target0} \PYG{o}{=} \PYG{n}{t\PYGZus{}bounce} \PYG{o}{+} \PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{n}{z\PYGZus{}vel\PYGZus{}new} \PYG{o}{+} \PYG{n}{std}\PYG{o}{::}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{discr}\PYG{p}{))} \PYG{o}{/} \PYG{p}{(}\PYG{l+m+mi}{2} \PYG{o}{*} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{));}
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}target1} \PYG{o}{=} \PYG{n}{t\PYGZus{}bounce} \PYG{o}{+} \PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{n}{z\PYGZus{}vel\PYGZus{}new} \PYG{o}{\PYGZhy{}} \PYG{n}{std}\PYG{o}{::}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{discr}\PYG{p}{))} \PYG{o}{/} \PYG{p}{(}\PYG{l+m+mi}{2} \PYG{o}{*} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{));}
+    \PYG{c+c1}{// locations of these target points}
+    \PYG{n}{Point3D} \PYG{n}{loc\PYGZus{}target0} \PYG{o}{=} \PYG{n}{Point3D}\PYG{p}{(}\PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getX}\PYG{p}{()} \PYG{o}{+} \PYG{n}{bx}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}target0}\PYG{p}{,}
+            \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getY}\PYG{p}{()} \PYG{o}{+} \PYG{n}{by}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}target0}\PYG{p}{,}
+            \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{()} \PYG{o}{+} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}target0} \PYG{o}{+} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{*} \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{t\PYGZus{}target0}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{),} \PYG{n}{t\PYGZus{}target0}\PYG{p}{);}
+    \PYG{n}{Point3D} \PYG{n}{loc\PYGZus{}target1} \PYG{o}{=} \PYG{n}{Point3D}\PYG{p}{(}\PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getX}\PYG{p}{()} \PYG{o}{+} \PYG{n}{bx}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}target1}\PYG{p}{,}
+            \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getY}\PYG{p}{()} \PYG{o}{+} \PYG{n}{by}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}target1}\PYG{p}{,}
+            \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{()} \PYG{o}{+} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}target1} \PYG{o}{+} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{*} \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{t\PYGZus{}target1}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{),} \PYG{n}{t\PYGZus{}target1}\PYG{p}{);}
+    \PYG{c+c1}{// distances to target points}
+    \PYG{k+kt}{double} \PYG{n}{dist\PYGZus{}target0} \PYG{o}{=} \PYG{n}{loc\PYGZus{}target0}\PYG{p}{.}\PYG{n}{norm}\PYG{p}{();}
+    \PYG{k+kt}{double} \PYG{n}{dist\PYGZus{}target1} \PYG{o}{=} \PYG{n}{loc\PYGZus{}target1}\PYG{p}{.}\PYG{n}{norm}\PYG{p}{();}
+    \PYG{c+c1}{// choose closer target}
+    \PYG{n}{Point3D} \PYG{n}{ptTarget} \PYG{o}{=} \PYG{n}{dist\PYGZus{}target0} \PYG{o}{\PYGZlt{}} \PYG{n}{dist\PYGZus{}target1} \PYG{o}{?} \PYG{n+nl}{loc\PYGZus{}target0} \PYG{p}{:} \PYG{n}{loc\PYGZus{}target1}\PYG{p}{;}
+    \PYG{k}{return} \PYG{n}{ptTarget} \PYG{o}{\PYGZhy{}} \PYG{n}{Point3D}\PYG{p}{(}\PYG{n}{PADDLE\PYGZus{}X}\PYG{p}{,} \PYG{n}{PADDLE\PYGZus{}Y}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+c1}{// Performs regression}
+\PYG{k+kt}{void} \PYG{n+nf}{trajectoryRegression}\PYG{p}{(}\PYG{n}{std}\PYG{o}{::}\PYG{n}{deque}\PYG{o}{\PYGZlt{}}\PYG{n}{Point3D}\PYG{o}{\PYGZgt{}\PYGZam{}} \PYG{n}{points}\PYG{p}{,} \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{bz}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{bR}\PYG{p}{,}
+        \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{new\PYGZus{}beta\PYGZus{}x}\PYG{p}{,} \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{new\PYGZus{}beta\PYGZus{}y}\PYG{p}{,} \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{new\PYGZus{}beta\PYGZus{}z}\PYG{p}{,} \PYG{k+kt}{double}\PYG{o}{\PYGZam{}} \PYG{n}{new\PYGZus{}beta\PYGZus{}R}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// Calculate bounce time}
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}bounce} \PYG{o}{=} \PYG{n}{predictBounceTime}\PYG{p}{(}\PYG{n}{bz}\PYG{p}{,} \PYG{n}{points}\PYG{p}{.}\PYG{n}{front}\PYG{p}{().}\PYG{n}{getZ}\PYG{p}{());}
+
+    \PYG{c+cm}{/* Populate predictor matrices and response vectors */}
+    \PYG{n}{arma}\PYG{o}{::}\PYG{n}{mat} \PYG{n}{t}\PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{(),} \PYG{l+m+mi}{2}\PYG{p}{);} \PYG{c+c1}{// for global x, y}
+    \PYG{n}{arma}\PYG{o}{::}\PYG{n}{mat} \PYG{n}{t2}\PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{(),} \PYG{l+m+mi}{3}\PYG{p}{);} \PYG{c+c1}{// for global z}
+    \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{res\PYGZus{}x}\PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{());} \PYG{c+c1}{// global x}
+    \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{res\PYGZus{}y}\PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{());} \PYG{c+c1}{// global y}
+    \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{res\PYGZus{}z}\PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{());} \PYG{c+c1}{// global z}
+    \PYG{k}{for} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{();} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{c+c1}{// Populate predictor matrices}
+        \PYG{n}{t}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;} \PYG{c+c1}{// constant for bias/offset}
+        \PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+        \PYG{n}{t}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{=} \PYG{n}{points}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{getT}\PYG{p}{()} \PYG{o}{\PYGZhy{}} \PYG{n}{points}\PYG{p}{.}\PYG{n}{front}\PYG{p}{().}\PYG{n}{getT}\PYG{p}{();} \PYG{c+c1}{// t (linear term)}
+        \PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{=} \PYG{n}{t}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{);}
+        \PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{=} \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{),} \PYG{l+m+mi}{2}\PYG{p}{);} \PYG{c+c1}{// t\PYGZca{}2 (quadratic term)}
+
+        \PYG{c+c1}{// Populate response vectors}
+        \PYG{n}{res\PYGZus{}x}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{o}{=} \PYG{n}{points}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{getX}\PYG{p}{();}
+        \PYG{n}{res\PYGZus{}y}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{o}{=} \PYG{n}{points}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{getY}\PYG{p}{();}
+        \PYG{n}{res\PYGZus{}z}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{o}{=} \PYG{n}{points}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{getZ}\PYG{p}{();}
+
+        \PYG{c+c1}{// If point is after first bounce, ignore}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{t}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{n}{t\PYGZus{}bounce}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{res\PYGZus{}z}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{n}{state} \PYG{o}{=} \PYG{n}{bounced}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+cm}{/* Perform regression to estimate new kinematic coefficients */}
+    \PYG{n}{new\PYGZus{}beta\PYGZus{}x} \PYG{o}{=} \PYG{p}{(}\PYG{n}{t}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t}\PYG{p}{).}\PYG{n}{i}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{res\PYGZus{}x}\PYG{p}{;}
+    \PYG{n}{new\PYGZus{}beta\PYGZus{}y} \PYG{o}{=} \PYG{p}{(}\PYG{n}{t}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t}\PYG{p}{).}\PYG{n}{i}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{res\PYGZus{}y}\PYG{p}{;}
+    \PYG{n}{new\PYGZus{}beta\PYGZus{}z} \PYG{o}{=} \PYG{p}{(}\PYG{n}{t2}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t2}\PYG{p}{).}\PYG{n}{i}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t2}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{res\PYGZus{}z}\PYG{p}{;}
+    \PYG{n}{new\PYGZus{}beta\PYGZus{}R} \PYG{o}{=} \PYG{n}{beta\PYGZus{}R}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+cm}{/* Main method */}
+\PYG{k+kt}{int} \PYG{n+nf}{main}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{argc}\PYG{p}{,} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{argv}\PYG{p}{[])} \PYG{p}{\PYGZob{}}
+    \PYG{n}{verbose} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{argc} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{verbose} \PYG{o}{=} \PYG{n}{atoi}\PYG{p}{(}\PYG{n}{argv}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]);}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{verbose} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}Verbose level \PYGZpc{}d}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{verbose}\PYG{p}{);}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+c1}{// Connect cameras}
+    \PYG{n}{Pixy} \PYG{n}{pixy0}\PYG{p}{(}\PYG{n}{ADDR0}\PYG{p}{);}
+    \PYG{n}{Pixy} \PYG{n}{pixy1}\PYG{p}{(}\PYG{n}{ADDR1}\PYG{p}{);}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{pixy0}\PYG{p}{.}\PYG{n}{getLink}\PYG{p}{().}\PYG{n}{getAddr}\PYG{p}{()} \PYG{o}{!=} \PYG{n}{ADDR0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{verbose} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{fprintf}\PYG{p}{(}\PYG{n}{stderr}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Pixy 0 failed to initialize with I2C address \PYGZpc{}x.}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{ADDR0}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{pixy1}\PYG{p}{.}\PYG{n}{getLink}\PYG{p}{().}\PYG{n}{getAddr}\PYG{p}{()} \PYG{o}{!=} \PYG{n}{ADDR1} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{verbose} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{fprintf}\PYG{p}{(}\PYG{n}{stderr}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Pixy 1 failed to initialize with I2C address \PYGZpc{}x.}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{ADDR1}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+c1}{// Connect to PSoC}
+    \PYG{k+kt}{int} \PYG{n}{baud} \PYG{o}{=} \PYG{l+m+mi}{9600}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{psoc\PYGZus{}handle} \PYG{o}{=} \PYG{n}{serialOpen}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}/dev/ttyAMA0\PYGZdq{}}\PYG{p}{,} \PYG{n}{baud}\PYG{p}{);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{psoc\PYGZus{}handle} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{verbose} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{fprintf}\PYG{p}{(}\PYG{n}{stderr}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}PSoC UART channel failed to initialize.}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{c+c1}{// Timing}
+    \PYG{n}{timer\PYGZus{}obj} \PYG{n}{t0}\PYG{p}{;}
+    \PYG{n}{timer\PYGZus{}start}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{t0}\PYG{p}{);}
+
+    \PYG{c+c1}{// Kinematics}
+    \PYG{n}{std}\PYG{o}{::}\PYG{n}{deque}\PYG{o}{\PYGZlt{}}\PYG{n}{Point3D}\PYG{o}{\PYGZgt{}} \PYG{n}{points}\PYG{p}{;}
+
+    \PYG{k+kt}{bool} \PYG{n}{stopped} \PYG{o}{=} \PYG{n+nb}{false}\PYG{p}{;}
+    \PYG{k}{while} \PYG{p}{(}\PYG{n+nb}{true}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{c+cm}{/* Get data from cameras */}
+        \PYG{c+c1}{// Wait until blocks detected on both cameras}
+        \PYG{k+kt}{int} \PYG{n}{nBlocks0} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{nBlocks1} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{k}{while} \PYG{p}{(}\PYG{o}{!}\PYG{n}{nBlocks0}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{n}{nBlocks0} \PYG{o}{=} \PYG{n}{pixy0}\PYG{p}{.}\PYG{n}{getBlocks}\PYG{p}{();} \PYG{p}{\PYGZcb{}}
+        \PYG{k}{while} \PYG{p}{(}\PYG{o}{!}\PYG{n}{nBlocks1}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{n}{nBlocks1} \PYG{o}{=} \PYG{n}{pixy1}\PYG{p}{.}\PYG{n}{getBlocks}\PYG{p}{();} \PYG{p}{\PYGZcb{}}
+
+        \PYG{c+cm}{/* Timing */}
+        \PYG{n}{timer\PYGZus{}obj} \PYG{n}{t1}\PYG{p}{;}
+        \PYG{n}{timer\PYGZus{}start}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{t1}\PYG{p}{);}
+
+        \PYG{c+cm}{/* Detect ball in 3D */}
+        \PYG{n}{std}\PYG{o}{::}\PYG{n}{queue}\PYG{o}{\PYGZlt{}}\PYG{n}{std}\PYG{o}{::}\PYG{n}{pair}\PYG{o}{\PYGZlt{}}\PYG{k+kt}{int}\PYG{p}{,} \PYG{k+kt}{int}\PYG{o}{\PYGZgt{}} \PYG{o}{\PYGZgt{}} \PYG{n}{plausiblePairs}\PYG{p}{;}
+        \PYG{k}{for} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{ind0} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{ind0} \PYG{o}{\PYGZlt{}} \PYG{n}{nBlocks0}\PYG{p}{;} \PYG{n}{ind0}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k}{for} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{ind1} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{ind1} \PYG{o}{\PYGZlt{}} \PYG{n}{nBlocks1}\PYG{p}{;} \PYG{n}{ind1}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{k+kt}{int} \PYG{n}{w0} \PYG{o}{=} \PYG{n}{pixy0}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind0}\PYG{p}{].}\PYG{n}{width}\PYG{p}{;}
+                \PYG{k+kt}{int} \PYG{n}{h0} \PYG{o}{=} \PYG{n}{pixy0}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind0}\PYG{p}{].}\PYG{n}{height}\PYG{p}{;}
+                \PYG{k+kt}{int} \PYG{n}{w1} \PYG{o}{=} \PYG{n}{pixy1}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind1}\PYG{p}{].}\PYG{n}{width}\PYG{p}{;}
+                \PYG{k+kt}{int} \PYG{n}{h1} \PYG{o}{=} \PYG{n}{pixy1}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind1}\PYG{p}{].}\PYG{n}{height}\PYG{p}{;}
+
+                \PYG{c+c1}{// Filter roughly round objects}
+                \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{p}{(}\PYG{n}{w0} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0} \PYG{o}{\PYGZhy{}} \PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{h0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{h0} \PYG{o}{\PYGZlt{}} \PYG{n}{w0} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0} \PYG{o}{+} \PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+                    \PYG{k}{continue}\PYG{p}{;}
+                \PYG{p}{\PYGZcb{}}
+                \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{p}{(}\PYG{n}{w1} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0} \PYG{o}{\PYGZhy{}} \PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{h1} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{h1} \PYG{o}{\PYGZlt{}} \PYG{n}{w1} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0} \PYG{o}{+} \PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+                    \PYG{k}{continue}\PYG{p}{;}
+                \PYG{p}{\PYGZcb{}}
+
+                \PYG{c+c1}{// Add plausible pair to queue (implicitly in decreasing order of size)}
+                \PYG{n}{plausiblePairs}\PYG{p}{.}\PYG{n}{push}\PYG{p}{(}\PYG{n}{std}\PYG{o}{::}\PYG{n}{make\PYGZus{}pair}\PYG{p}{(}\PYG{n}{ind0}\PYG{p}{,} \PYG{n}{ind1}\PYG{p}{));}
+            \PYG{p}{\PYGZcb{}}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{c+cm}{/* Loop through each plausible pair */}
+        \PYG{k+kt}{bool} \PYG{n}{missed} \PYG{o}{=} \PYG{n+nb}{true}\PYG{p}{;}
+        \PYG{k}{while} \PYG{p}{(}\PYG{o}{!}\PYG{n}{plausiblePairs}\PYG{p}{.}\PYG{n}{empty}\PYG{p}{())} \PYG{p}{\PYGZob{}}
+            \PYG{n}{std}\PYG{o}{::}\PYG{n}{pair}\PYG{o}{\PYGZlt{}}\PYG{k+kt}{int}\PYG{p}{,} \PYG{k+kt}{int}\PYG{o}{\PYGZgt{}} \PYG{n}{pp} \PYG{o}{=} \PYG{n}{plausiblePairs}\PYG{p}{.}\PYG{n}{front}\PYG{p}{();}
+            \PYG{k+kt}{int} \PYG{n}{ind0} \PYG{o}{=} \PYG{n}{pp}\PYG{p}{.}\PYG{n}{first}\PYG{p}{,} \PYG{n}{ind1} \PYG{o}{=} \PYG{n}{pp}\PYG{p}{.}\PYG{n}{second}\PYG{p}{;}
+            \PYG{n}{plausiblePairs}\PYG{p}{.}\PYG{n}{pop}\PYG{p}{();}
+
+            \PYG{c+cm}{/* Calculate position of ball in car coordinates (x, z are horizontal plane */}
+            \PYG{c+c1}{// Get x/y coordinates of ball by averaging coordinates}
+            \PYG{k+kt}{double} \PYG{n}{x\PYGZus{}avg} \PYG{o}{=} \PYG{p}{((}\PYG{k+kt}{double}\PYG{p}{)} \PYG{p}{(}\PYG{n}{pixy0}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind0}\PYG{p}{].}\PYG{n}{x}\PYG{p}{)} \PYG{o}{+}
+                    \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{p}{(}\PYG{n}{pixy1}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind1}\PYG{p}{].}\PYG{n}{x}\PYG{p}{))} \PYG{o}{/} \PYG{l+m+mf}{2.0}\PYG{p}{;}
+            \PYG{k+kt}{double} \PYG{n}{y\PYGZus{}avg} \PYG{o}{=} \PYG{p}{((}\PYG{k+kt}{double}\PYG{p}{)} \PYG{p}{(}\PYG{n}{pixy0}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind0}\PYG{p}{].}\PYG{n}{y}\PYG{p}{)} \PYG{o}{+}
+                    \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{p}{(}\PYG{n}{pixy1}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind1}\PYG{p}{].}\PYG{n}{y}\PYG{p}{))} \PYG{o}{/} \PYG{l+m+mf}{2.0}\PYG{p}{;}
+
+            \PYG{c+c1}{// Get z world coordinates using stereo}
+            \PYG{k+kt}{double} \PYG{n}{x\PYGZus{}diff} \PYG{o}{=} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{p}{(}\PYG{n}{pixy0}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind0}\PYG{p}{].}\PYG{n}{x}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{p}{(}\PYG{n}{pixy1}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind1}\PYG{p}{].}\PYG{n}{x}\PYG{p}{);}
+            \PYG{k+kt}{double} \PYG{n}{z\PYGZus{}world} \PYG{o}{=} \PYG{n}{fx} \PYG{o}{*} \PYG{n}{CAM\PYGZus{}HOR\PYGZus{}SEP} \PYG{o}{/} \PYG{n}{x\PYGZus{}diff}\PYG{p}{;}
+
+            \PYG{c+c1}{// Convert x and y image coordinates to world coordinates}
+            \PYG{k+kt}{double} \PYG{n}{x\PYGZus{}world} \PYG{o}{=} \PYG{p}{(}\PYG{n}{x\PYGZus{}avg} \PYG{o}{\PYGZhy{}} \PYG{n}{cx}\PYG{p}{)} \PYG{o}{*} \PYG{n}{z\PYGZus{}world} \PYG{o}{/} \PYG{n}{fx}\PYG{p}{;}
+            \PYG{k+kt}{double} \PYG{n}{y\PYGZus{}world} \PYG{o}{=} \PYG{n}{CAM\PYGZus{}HEIGHT} \PYG{o}{\PYGZhy{}} \PYG{p}{(}\PYG{n}{y\PYGZus{}avg} \PYG{o}{\PYGZhy{}} \PYG{n}{cy}\PYG{p}{)} \PYG{o}{*} \PYG{n}{z\PYGZus{}world} \PYG{o}{/} \PYG{n}{fy}\PYG{p}{;}
+
+            \PYG{c+c1}{// Calculate real width/height}
+            \PYG{k+kt}{double} \PYG{n}{real\PYGZus{}w} \PYG{o}{=} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{p}{(}\PYG{n}{pixy0}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind0}\PYG{p}{].}\PYG{n}{width} \PYG{o}{+} \PYG{n}{pixy1}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind1}\PYG{p}{].}\PYG{n}{width}\PYG{p}{)} \PYG{o}{/} \PYG{l+m+mi}{2}
+                \PYG{o}{*} \PYG{n}{z\PYGZus{}world} \PYG{o}{/} \PYG{n}{fx}\PYG{p}{;}
+            \PYG{k+kt}{double} \PYG{n}{real\PYGZus{}h} \PYG{o}{=} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{p}{(}\PYG{n}{pixy0}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind0}\PYG{p}{].}\PYG{n}{height} \PYG{o}{+} \PYG{n}{pixy1}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind1}\PYG{p}{].}\PYG{n}{height}\PYG{p}{)} \PYG{o}{/} \PYG{l+m+mi}{2}
+                \PYG{o}{*} \PYG{n}{z\PYGZus{}world} \PYG{o}{/} \PYG{n}{fy}\PYG{p}{;}
+
+            \PYG{c+c1}{// Timing}
+            \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}elapsed} \PYG{o}{=} \PYG{n}{timer\PYGZus{}elapsed}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{t0}\PYG{p}{);}
+
+            \PYG{c+c1}{// Prepare current ball position in car coordinates}
+            \PYG{n}{Point3D} \PYG{n}{ptNow} \PYG{o}{=} \PYG{n}{Point3D}\PYG{p}{(}\PYG{n}{x\PYGZus{}world}\PYG{p}{,} \PYG{n}{z\PYGZus{}world}\PYG{p}{,} \PYG{n}{y\PYGZus{}world}\PYG{p}{,} \PYG{n}{t\PYGZus{}elapsed}\PYG{p}{);}
+
+            \PYG{c+cm}{/* Validate with stereo results */}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{x\PYGZus{}diff} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{c+c1}{// x\PYGZus{}diff makes no sense}
+                \PYG{k}{continue}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{z\PYGZus{}world} \PYG{o}{\PYGZgt{}} \PYG{n}{Z\PYGZus{}MAX}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{c+c1}{// max z}
+                \PYG{k}{continue}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{p}{(}\PYG{n}{BALL\PYGZus{}DIAM} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0}\PYG{o}{\PYGZhy{}}\PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{real\PYGZus{}w} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{real\PYGZus{}w} \PYG{o}{\PYGZlt{}} \PYG{n}{BALL\PYGZus{}DIAM} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0}\PYG{o}{+}\PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+                \PYG{c+c1}{// wrong width}
+                \PYG{k}{continue}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{p}{(}\PYG{n}{BALL\PYGZus{}DIAM} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0}\PYG{o}{\PYGZhy{}}\PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{real\PYGZus{}h} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{real\PYGZus{}h} \PYG{o}{\PYGZlt{}} \PYG{n}{BALL\PYGZus{}DIAM} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0}\PYG{o}{+}\PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+                \PYG{c+c1}{// wrong height}
+                \PYG{k}{continue}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{c+cm}{/* Validate with trajectory prediction */}
+            \PYG{n}{Point3D} \PYG{n}{ptExp}\PYG{p}{;}
+            \PYG{c+c1}{// don\PYGZsq{}t check trajectory if we don\PYGZsq{}t have a reliable model}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{()} \PYG{o}{\PYGZgt{}=} \PYG{n}{MIN\PYGZus{}REGRESSION\PYGZus{}POINTS}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{c+c1}{// Max change in position from expected next position}
+                \PYG{n}{Point3D} \PYG{n}{ptFirst} \PYG{o}{=} \PYG{n}{points}\PYG{p}{.}\PYG{n}{front}\PYG{p}{();}
+                \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}first} \PYG{o}{=} \PYG{n}{ptFirst}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{();}
+                \PYG{n}{ptExp} \PYG{o}{=} \PYG{n}{predictPosition}\PYG{p}{(}\PYG{n}{beta\PYGZus{}x}\PYG{p}{,} \PYG{n}{beta\PYGZus{}y}\PYG{p}{,} \PYG{n}{beta\PYGZus{}z}\PYG{p}{,} \PYG{n}{beta\PYGZus{}R}\PYG{p}{,} \PYG{n}{ptFirst}\PYG{p}{,} \PYG{n}{t\PYGZus{}elapsed}\PYG{p}{);}
+                \PYG{c+c1}{// Current ball position is too far from expected position}
+                \PYG{k}{if} \PYG{p}{((}\PYG{n}{ptNow} \PYG{o}{\PYGZhy{}} \PYG{n}{ptExp}\PYG{p}{).}\PYG{n}{maxAbsSpatial}\PYG{p}{()} \PYG{o}{\PYGZgt{}} \PYG{n}{MAX\PYGZus{}POS\PYGZus{}DIFF}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{c+cm}{/* continue; */}
+                \PYG{p}{\PYGZcb{}}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{c+cm}{/* From here on, we have accepted this point */}
+            \PYG{n}{missed} \PYG{o}{=} \PYG{n+nb}{false}\PYG{p}{;}
+            \PYG{n}{numMisses} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+
+            \PYG{c+c1}{// Add to points[]}
+            \PYG{n}{points}\PYG{p}{.}\PYG{n}{push\PYGZus{}back}\PYG{p}{(}\PYG{n}{ptNow}\PYG{p}{);}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{()} \PYG{o}{\PYGZgt{}} \PYG{n}{MAX\PYGZus{}REGRESSION\PYGZus{}POINTS}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{c+c1}{// maximum size}
+                \PYG{n}{points}\PYG{p}{.}\PYG{n}{pop\PYGZus{}front}\PYG{p}{();}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{c+cm}{/* Linear regression */}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{state} \PYG{o}{!=} \PYG{n}{bounced} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{()} \PYG{o}{\PYGZgt{}} \PYG{n}{MIN\PYGZus{}REGRESSION\PYGZus{}POINTS}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{new\PYGZus{}beta\PYGZus{}x}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{);}
+                \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{new\PYGZus{}beta\PYGZus{}y}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{);}
+                \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{new\PYGZus{}beta\PYGZus{}z}\PYG{p}{(}\PYG{l+m+mi}{3}\PYG{p}{);}
+                \PYG{k+kt}{double} \PYG{n}{new\PYGZus{}beta\PYGZus{}R}\PYG{p}{;}
+                \PYG{n}{trajectoryRegression}\PYG{p}{(}\PYG{n}{points}\PYG{p}{,} \PYG{n}{beta\PYGZus{}z}\PYG{p}{,} \PYG{n}{beta\PYGZus{}R}\PYG{p}{,}
+                        \PYG{n}{new\PYGZus{}beta\PYGZus{}x}\PYG{p}{,} \PYG{n}{new\PYGZus{}beta\PYGZus{}y}\PYG{p}{,} \PYG{n}{new\PYGZus{}beta\PYGZus{}z}\PYG{p}{,} \PYG{n}{new\PYGZus{}beta\PYGZus{}R}\PYG{p}{);}
+                \PYG{c+cm}{/* Validate results */}
+                \PYG{k+kt}{double} \PYG{n}{acc} \PYG{o}{=} \PYG{n}{new\PYGZus{}beta\PYGZus{}z}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{2} \PYG{o}{/} \PYG{l+m+mi}{1000}\PYG{p}{;}
+                \PYG{k}{if} \PYG{p}{(}\PYG{n}{acc} \PYG{o}{\PYGZgt{}} \PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{3.0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{c+c1}{// Reset regression variables}
+                    \PYG{n}{new\PYGZus{}beta\PYGZus{}x}\PYG{p}{.}\PYG{n}{zeros}\PYG{p}{();}
+                    \PYG{n}{new\PYGZus{}beta\PYGZus{}y}\PYG{p}{.}\PYG{n}{zeros}\PYG{p}{();}
+                    \PYG{n}{new\PYGZus{}beta\PYGZus{}z}\PYG{p}{.}\PYG{n}{zeros}\PYG{p}{();}
+                    \PYG{n}{new\PYGZus{}beta\PYGZus{}R} \PYG{o}{=} \PYG{n}{COEF\PYGZus{}REST}\PYG{p}{;}
+                    \PYG{c+c1}{// Flush points[]}
+                    \PYG{n}{points}\PYG{p}{.}\PYG{n}{clear}\PYG{p}{();}
+                    \PYG{n}{points}\PYG{p}{.}\PYG{n}{push\PYGZus{}back}\PYG{p}{(}\PYG{n}{ptNow}\PYG{p}{);}
+
+                    \PYG{n}{state} \PYG{o}{=} \PYG{n}{waiting}\PYG{p}{;}
+
+                    \PYG{c+cm}{/* // Remove points from points[] */} 
+                    \PYG{c+cm}{/* while (points.size() \PYGZgt{} MIN\PYGZus{}REGRESSION\PYGZus{}POINTS) \PYGZob{} */}
+                    \PYG{c+cm}{/*     points.pop\PYGZus{}front(); */}
+                    \PYG{c+cm}{/* \PYGZcb{} */}
+                    \PYG{c+cm}{/* // and re\PYGZhy{}do regression */}
+                    \PYG{c+cm}{/* trajectoryRegression(points, beta\PYGZus{}z, beta\PYGZus{}R, */}
+                    \PYG{c+cm}{/*         new\PYGZus{}beta\PYGZus{}x, new\PYGZus{}beta\PYGZus{}z, new\PYGZus{}beta\PYGZus{}z, new\PYGZus{}beta\PYGZus{}R); */}
+                    \PYG{c+c1}{// But don\PYGZsq{}t count this as a miss \PYGZhy{} we just need to restart our model}
+                \PYG{p}{\PYGZcb{}} \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{state} \PYG{o}{==} \PYG{n}{waiting}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{state} \PYG{o}{=} \PYG{n}{falling}\PYG{p}{;}
+                \PYG{p}{\PYGZcb{}}
+
+                \PYG{c+cm}{/* Update regression parameters */}
+                \PYG{n}{beta\PYGZus{}x} \PYG{o}{=} \PYG{n}{new\PYGZus{}beta\PYGZus{}x}\PYG{p}{;}
+                \PYG{n}{beta\PYGZus{}y} \PYG{o}{=} \PYG{n}{new\PYGZus{}beta\PYGZus{}y}\PYG{p}{;}
+                \PYG{n}{beta\PYGZus{}z} \PYG{o}{=} \PYG{n}{new\PYGZus{}beta\PYGZus{}z}\PYG{p}{;}
+                \PYG{n}{beta\PYGZus{}R} \PYG{o}{=} \PYG{n}{new\PYGZus{}beta\PYGZus{}R}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{c+cm}{/* // Predict bounce location */}
+            \PYG{c+cm}{/* Point3D ptTarget = predictBounceLocation(beta\PYGZus{}x, beta\PYGZus{}y, beta\PYGZus{}z, points.front()); */}
+
+            \PYG{c+c1}{// Predict location to need to drive to}
+            \PYG{n}{Point3D} \PYG{n}{ptTarget} \PYG{o}{=} \PYG{n}{predictLocationGoto}\PYG{p}{(}\PYG{n}{beta\PYGZus{}x}\PYG{p}{,} \PYG{n}{beta\PYGZus{}y}\PYG{p}{,} \PYG{n}{beta\PYGZus{}z}\PYG{p}{,} \PYG{n}{beta\PYGZus{}R}\PYG{p}{,}
+                    \PYG{n}{points}\PYG{p}{.}\PYG{n}{front}\PYG{p}{(),} \PYG{n}{PADDLE\PYGZus{}Z}\PYG{p}{);}
+
+            \PYG{c+cm}{/* Print all info */}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{verbose} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}\PYGZpc{}10.3f\PYGZdq{}}\PYG{p}{,} \PYG{n}{ptNow}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{());}
+                \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}, \PYGZpc{}10.3f, \PYGZpc{}10.3f, \PYGZpc{}10.3f, \PYGZpc{}10.3f\PYGZdq{}}\PYG{p}{,} \PYG{n}{beta\PYGZus{}z}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{),} \PYG{n}{beta\PYGZus{}z}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{),} \PYG{n}{beta\PYGZus{}z}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{),} \PYG{n}{beta\PYGZus{}R}\PYG{p}{);}
+                \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}, \PYGZpc{}10.3f, \PYGZpc{}10.3f, \PYGZpc{}10.3f\PYGZdq{}}\PYG{p}{,}
+                        \PYG{n}{ptExp}\PYG{p}{.}\PYG{n}{getX}\PYG{p}{(),} \PYG{n}{ptExp}\PYG{p}{.}\PYG{n}{getY}\PYG{p}{(),} \PYG{n}{ptExp}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{());}
+                \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}, \PYGZpc{}10.3f, \PYGZpc{}10.3f, \PYGZpc{}10.3f, \PYGZpc{}3d\PYGZdq{}}\PYG{p}{,}
+                        \PYG{n}{ptNow}\PYG{p}{.}\PYG{n}{getX}\PYG{p}{(),} \PYG{n}{ptNow}\PYG{p}{.}\PYG{n}{getY}\PYG{p}{(),} \PYG{n}{ptNow}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{(),} \PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{());}
+
+                \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}, \PYGZpc{}7.5f}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{timer\PYGZus{}elapsed}\PYG{p}{(}\PYG{o}{\PYGZam{}}\PYG{n}{t1}\PYG{p}{));}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{k+kt}{double} \PYG{n}{timeLeft} \PYG{o}{=} \PYG{n}{ptTarget}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{()} \PYG{o}{\PYGZhy{}} \PYG{n}{ptNow}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{()} \PYG{o}{+} \PYG{n}{points}\PYG{p}{.}\PYG{n}{front}\PYG{p}{().}\PYG{n}{getT}\PYG{p}{();}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{()} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}, \PYGZpc{}10.3f, \PYGZpc{}2d, \PYGZpc{}10.3f, \PYGZpc{}10.3f, \PYGZpc{}10.3f}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+                        \PYG{n}{timeLeft}\PYG{p}{,} \PYG{n}{state}\PYG{p}{,} \PYG{n}{ptTarget}\PYG{p}{.}\PYG{n}{getX}\PYG{p}{(),} \PYG{n}{ptTarget}\PYG{p}{.}\PYG{n}{getY}\PYG{p}{(),} \PYG{n}{ptTarget}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{());}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{c+cm}{/* Send instructions to PSoC */}
+            \PYG{k}{if} \PYG{p}{(}\PYG{n}{state} \PYG{o}{!=} \PYG{n}{waiting} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{()} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{MIN\PYGZus{}REGRESSION\PYGZus{}POINTS} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{timeLeft} \PYG{o}{\PYGZgt{}} \PYG{l+m+mf}{0.05}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{c+cm}{/* serialFlush(psoc\PYGZus{}handle); */}
+                \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}\PYGZgt{}\PYGZgt{}\PYGZgt{} GO(\PYGZpc{}.3f, \PYGZpc{}.3f, \PYGZpc{}.3f, \PYGZpc{}.3f)}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+                        \PYG{n}{ptTarget}\PYG{p}{.}\PYG{n}{getX}\PYG{p}{()} \PYG{o}{\PYGZhy{}} \PYG{n}{PADDLE\PYGZus{}X}\PYG{p}{,} \PYG{n}{ptTarget}\PYG{p}{.}\PYG{n}{getY}\PYG{p}{()} \PYG{o}{\PYGZhy{}} \PYG{n}{PADDLE\PYGZus{}Y} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{100}\PYG{p}{,}
+                        \PYG{n}{timeLeft}\PYG{p}{,} \PYG{l+m+mf}{0.6}\PYG{p}{);}
+                \PYG{n}{serialPrintf}\PYG{p}{(}\PYG{n}{psoc\PYGZus{}handle}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}GO(\PYGZpc{}.3f, \PYGZpc{}.3f, \PYGZpc{}.3f, \PYGZpc{}.3f)}\PYG{l+s+se}{\PYGZbs{}n\PYGZbs{}0}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,}
+                        \PYG{n}{ptTarget}\PYG{p}{.}\PYG{n}{getX}\PYG{p}{()} \PYG{o}{\PYGZhy{}} \PYG{n}{PADDLE\PYGZus{}X}\PYG{p}{,} \PYG{n}{ptTarget}\PYG{p}{.}\PYG{n}{getY}\PYG{p}{()} \PYG{o}{\PYGZhy{}} \PYG{n}{PADDLE\PYGZus{}Y} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{100}\PYG{p}{,}
+                        \PYG{n}{timeLeft}\PYG{p}{,} \PYG{l+m+mf}{0.6}\PYG{p}{);}
+                \PYG{k+kt}{int} \PYG{n}{c}\PYG{p}{;}
+                \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}\PYGZlt{}\PYGZlt{}\PYGZlt{} \PYGZdq{}}\PYG{p}{);}
+                \PYG{k}{while} \PYG{p}{((}\PYG{n}{c} \PYG{o}{=} \PYG{n}{serialGetchar}\PYG{p}{(}\PYG{n}{psoc\PYGZus{}handle}\PYG{p}{))} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}\PYGZpc{}c\PYGZdq{}}\PYG{p}{,} \PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{)} \PYG{n}{c}\PYG{p}{);}
+                \PYG{p}{\PYGZcb{}}
+                \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+                \PYG{c+cm}{/* printf(\PYGZdq{}GO(\PYGZpc{}.3f, \PYGZpc{}.3f, \PYGZpc{}.3f, \PYGZpc{}.3f)\PYGZbs{}n\PYGZdq{}, */}
+                \PYG{c+cm}{/*         ptTarget.getX(), ptTarget.getY(), timeLeft, 0.6); */}
+                \PYG{c+cm}{/* serialPrintf(psoc\PYGZus{}handle, \PYGZdq{}GO(\PYGZpc{}.3f, \PYGZpc{}.3f, \PYGZpc{}.3f, \PYGZpc{}.3f)\PYGZbs{}n\PYGZbs{}0\PYGZdq{}, */}
+                \PYG{c+cm}{/*         ptTarget.getX(), ptTarget.getY(), timeLeft, 0.6); */}
+                \PYG{n}{stopped} \PYG{o}{=} \PYG{n+nb}{true}\PYG{p}{;}
+                \PYG{k}{break}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{c+cm}{/* Break so that it examines no further plausible pairs and examines next frame */}
+            \PYG{k}{break}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{c+c1}{// If all plausible pairs were rejected, we missed.}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{missed}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{n}{numMisses}\PYG{o}{++}\PYG{p}{;} \PYG{p}{\PYGZcb{}}
+        \PYG{c+cm}{/* Flush points[] if too many misses */}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{numMisses} \PYG{o}{\PYGZgt{}} \PYG{n}{MAX\PYGZus{}MISSES}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{points}\PYG{p}{.}\PYG{n}{clear}\PYG{p}{();}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{stopped}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{c+c1}{// Kill motors}
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}\PYGZgt{}\PYGZgt{}\PYGZgt{} GO(0, 0, 0, 0.5)}\PYG{l+s+se}{\PYGZbs{}n\PYGZbs{}0}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+            \PYG{n}{serialPrintf}\PYG{p}{(}\PYG{n}{psoc\PYGZus{}handle}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}GO(0, 0, 0, 0.5)}\PYG{l+s+se}{\PYGZbs{}n\PYGZbs{}0}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}\PYGZlt{}\PYGZlt{}\PYGZlt{} \PYGZdq{}}\PYG{p}{);}
+            \PYG{k+kt}{char} \PYG{n}{c}\PYG{p}{;}
+            \PYG{k}{while} \PYG{p}{((}\PYG{n}{c} \PYG{o}{=} \PYG{n}{serialGetchar}\PYG{p}{(}\PYG{n}{psoc\PYGZus{}handle}\PYG{p}{))} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}\PYGZpc{}c\PYGZdq{}}\PYG{p}{,} \PYG{p}{(}\PYG{k+kt}{char}\PYG{p}{)} \PYG{n}{c}\PYG{p}{);}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{n}{printf}\PYG{p}{(}\PYG{l+s}{\PYGZdq{}}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+
+            \PYG{c+c1}{// Reset: flush points[] and reset betas}
+            \PYG{n}{points}\PYG{p}{.}\PYG{n}{clear}\PYG{p}{();}
+            \PYG{n}{beta\PYGZus{}x}\PYG{p}{.}\PYG{n}{fill}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+            \PYG{n}{beta\PYGZus{}y}\PYG{p}{.}\PYG{n}{fill}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+            \PYG{n}{beta\PYGZus{}z}\PYG{p}{.}\PYG{n}{fill}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{);}
+            \PYG{n}{beta\PYGZus{}R} \PYG{o}{=} \PYG{n}{COEF\PYGZus{}REST}\PYG{p}{;}
+            \PYG{n}{stopped} \PYG{o}{=} \PYG{n+nb}{false}\PYG{p}{;}
+            \PYG{n}{state} \PYG{o}{=} \PYG{n}{waiting}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}
