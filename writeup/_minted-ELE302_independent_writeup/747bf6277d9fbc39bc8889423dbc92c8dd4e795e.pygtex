@@ -1,0 +1,36 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{// Calculate bounce time}
+\PYG{k+kt}{double} \PYG{n}{t\PYGZus{}bounce} \PYG{o}{=} \PYG{n}{predictBounceTime}\PYG{p}{(}\PYG{n}{beta\PYGZus{}z}\PYG{p}{,} \PYG{n}{points}\PYG{p}{.}\PYG{n}{front}\PYG{p}{().}\PYG{n}{getZ}\PYG{p}{());}
+\PYG{c+c1}{// Regress using current coefficient of restitution}
+\PYG{k+kt}{double} \PYG{n}{new\PYGZus{}beta\PYGZus{}R} \PYG{o}{=} \PYG{n}{beta\PYGZus{}R}\PYG{p}{;}
+\PYG{c+cm}{/* Populate predictor matrices and response vectors */}
+\PYG{n}{arma}\PYG{o}{::}\PYG{n}{mat} \PYG{n}{t}\PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{(),} \PYG{l+m+mi}{2}\PYG{p}{);} \PYG{c+c1}{// for global x, y}
+\PYG{n}{arma}\PYG{o}{::}\PYG{n}{mat} \PYG{n}{t2}\PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{(),} \PYG{l+m+mi}{3}\PYG{p}{);} \PYG{c+c1}{// for global z}
+\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{res\PYGZus{}x}\PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{());} \PYG{c+c1}{// global x}
+\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{res\PYGZus{}y}\PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{());} \PYG{c+c1}{// global y}
+\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{res\PYGZus{}z}\PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{());} \PYG{c+c1}{// global z}
+\PYG{k}{for} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{();} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// Populate predictor matrices}
+    \PYG{n}{t}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;} \PYG{c+c1}{// constant for bias/offset}
+    \PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{n}{t}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{=} \PYG{n}{points}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{getT}\PYG{p}{()} \PYG{o}{\PYGZhy{}} \PYG{n}{points}\PYG{p}{.}\PYG{n}{front}\PYG{p}{().}\PYG{n}{getT}\PYG{p}{();} \PYG{c+c1}{// t (linear term)}
+    \PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{=} \PYG{n}{t}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{);}
+    \PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{=} \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{),} \PYG{l+m+mi}{2}\PYG{p}{);} \PYG{c+c1}{// t\PYGZca{}2 (quadratic term)}
+
+    \PYG{c+c1}{// Populate response vectors}
+    \PYG{n}{res\PYGZus{}x}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{o}{=} \PYG{n}{points}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{getX}\PYG{p}{();}
+    \PYG{n}{res\PYGZus{}y}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{o}{=} \PYG{n}{points}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{getY}\PYG{p}{();}
+    \PYG{n}{res\PYGZus{}z}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{o}{=} \PYG{n}{points}\PYG{p}{[}\PYG{n}{i}\PYG{p}{].}\PYG{n}{getZ}\PYG{p}{();}
+
+    \PYG{c+c1}{// Has it bounced?}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{t}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{n}{t\PYGZus{}bounce}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{c+c1}{// If so...}
+        \PYG{c+c1}{// Transform z, t to lie on the original parabola}
+        \PYG{k+kt}{double} \PYG{n}{tnew} \PYG{o}{=} \PYG{n}{t\PYGZus{}bounce} \PYG{o}{\PYGZhy{}} \PYG{p}{(}\PYG{n}{t}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{t\PYGZus{}bounce}\PYG{p}{)} \PYG{o}{/} \PYG{n}{std}\PYG{o}{::}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{new\PYGZus{}beta\PYGZus{}R}\PYG{p}{);}
+        \PYG{k+kt}{double} \PYG{n}{znew} \PYG{o}{=} \PYG{n}{res\PYGZus{}z}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{o}{/} \PYG{n}{new\PYGZus{}beta\PYGZus{}R}\PYG{p}{;}
+        \PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{=} \PYG{n}{tnew}\PYG{p}{;}
+        \PYG{n}{t2}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{=} \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{tnew}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{);}
+        \PYG{n}{res\PYGZus{}z}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{o}{=} \PYG{n}{znew}\PYG{p}{;}
+        \PYG{n}{res\PYGZus{}z}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{o}{=} \PYG{p}{(}\PYG{n}{beta\PYGZus{}z}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{+} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZhy{}}\PYG{n}{std}\PYG{o}{::}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{beta\PYGZus{}R}\PYG{p}{))}\PYG{o}{*}\PYG{n}{beta\PYGZus{}z}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{o}{*}\PYG{n}{t\PYGZus{}bounce}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{res\PYGZus{}z}\PYG{p}{(}\PYG{n}{i}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

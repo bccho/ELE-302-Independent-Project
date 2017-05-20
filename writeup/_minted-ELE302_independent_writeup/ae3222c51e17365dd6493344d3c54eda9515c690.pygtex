@@ -1,0 +1,17 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/* Validate with stereo results */}
+\PYG{k}{if} \PYG{p}{(}\PYG{n}{x\PYGZus{}diff} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{c+c1}{// x\PYGZus{}diff makes no sense}
+    \PYG{k}{continue}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\PYG{k}{if} \PYG{p}{(}\PYG{n}{z\PYGZus{}world} \PYG{o}{\PYGZgt{}} \PYG{n}{Z\PYGZus{}MAX}\PYG{p}{)} \PYG{p}{\PYGZob{}} \PYG{c+c1}{// max z}
+    \PYG{k}{continue}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{p}{(}\PYG{n}{BALL\PYGZus{}DIAM} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0}\PYG{o}{\PYGZhy{}}\PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{real\PYGZus{}w} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{real\PYGZus{}w} \PYG{o}{\PYGZlt{}} \PYG{n}{BALL\PYGZus{}DIAM} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0}\PYG{o}{+}\PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// wrong width}
+    \PYG{k}{continue}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{p}{(}\PYG{n}{BALL\PYGZus{}DIAM} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0}\PYG{o}{\PYGZhy{}}\PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{real\PYGZus{}h} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{real\PYGZus{}h} \PYG{o}{\PYGZlt{}} \PYG{n}{BALL\PYGZus{}DIAM} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0}\PYG{o}{+}\PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// wrong height}
+    \PYG{k}{continue}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

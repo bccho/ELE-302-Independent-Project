@@ -1,0 +1,22 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n}{std}\PYG{o}{::}\PYG{n}{queue}\PYG{o}{\PYGZlt{}}\PYG{n}{std}\PYG{o}{::}\PYG{n}{pair}\PYG{o}{\PYGZlt{}}\PYG{k+kt}{int}\PYG{p}{,} \PYG{k+kt}{int}\PYG{o}{\PYGZgt{}} \PYG{o}{\PYGZgt{}} \PYG{n}{plausiblePairs}\PYG{p}{;}
+\PYG{k}{for} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{ind0} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{ind0} \PYG{o}{\PYGZlt{}} \PYG{n}{nBlocks0}\PYG{p}{;} \PYG{n}{ind0}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{for} \PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{ind1} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{ind1} \PYG{o}{\PYGZlt{}} \PYG{n}{nBlocks1}\PYG{p}{;} \PYG{n}{ind1}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{w0} \PYG{o}{=} \PYG{n}{pixy0}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind0}\PYG{p}{].}\PYG{n}{width}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{h0} \PYG{o}{=} \PYG{n}{pixy0}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind0}\PYG{p}{].}\PYG{n}{height}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{w1} \PYG{o}{=} \PYG{n}{pixy1}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind1}\PYG{p}{].}\PYG{n}{width}\PYG{p}{;}
+        \PYG{k+kt}{int} \PYG{n}{h1} \PYG{o}{=} \PYG{n}{pixy1}\PYG{p}{.}\PYG{n}{blocks}\PYG{p}{[}\PYG{n}{ind1}\PYG{p}{].}\PYG{n}{height}\PYG{p}{;}
+
+        \PYG{c+c1}{// Filter roughly round objects}
+        \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{p}{(}\PYG{n}{w0} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0} \PYG{o}{\PYGZhy{}} \PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{h0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{h0} \PYG{o}{\PYGZlt{}} \PYG{n}{w0} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0} \PYG{o}{+} \PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+            \PYG{k}{continue}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{k}{if} \PYG{p}{(}\PYG{o}{!}\PYG{p}{(}\PYG{n}{w1} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0} \PYG{o}{\PYGZhy{}} \PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{h1} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{h1} \PYG{o}{\PYGZlt{}} \PYG{n}{w1} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mf}{1.0} \PYG{o}{+} \PYG{n}{SIZE\PYGZus{}TOL}\PYG{p}{)))} \PYG{p}{\PYGZob{}}
+            \PYG{k}{continue}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+
+        \PYG{c+c1}{// Add plausible pair to queue (implicitly in decreasing order of size)}
+        \PYG{n}{plausiblePairs}\PYG{p}{.}\PYG{n}{push}\PYG{p}{(}\PYG{n}{std}\PYG{o}{::}\PYG{n}{make\PYGZus{}pair}\PYG{p}{(}\PYG{n}{ind0}\PYG{p}{,} \PYG{n}{ind1}\PYG{p}{));}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

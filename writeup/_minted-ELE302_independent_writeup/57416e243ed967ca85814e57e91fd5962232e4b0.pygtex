@@ -1,0 +1,18 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{drive}\PYG{p}{(}\PYG{k+kt}{int} \PYG{n}{dirs}\PYG{p}{[],} \PYG{k+kt}{double} \PYG{n}{mags}\PYG{p}{[])} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{;}
+    \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{4}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{mags}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{mags}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{dirs}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{!=} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{!=} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    
+    \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Left\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Left\PYGZus{}ReadPeriod}\PYG{p}{());}
+    \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Right\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Front\PYGZus{}Right\PYGZus{}ReadPeriod}\PYG{p}{());}
+    \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Left\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{]} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Left\PYGZus{}ReadPeriod}\PYG{p}{());}
+    \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Right\PYGZus{}WriteCompare}\PYG{p}{(}\PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{n}{PWM\PYGZus{}Back\PYGZus{}Right\PYGZus{}ReadPeriod}\PYG{p}{());}
+    
+    \PYG{k+kt}{int} \PYG{n}{regVal} \PYG{o}{=} \PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{|} \PYG{p}{(}\PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{|} \PYG{p}{(}\PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{]} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{|} \PYG{p}{(}\PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{\PYGZlt{}\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{);}
+    \PYG{n}{Control\PYGZus{}Reg\PYGZus{}Direction\PYGZus{}Write}\PYG{p}{(}\PYG{n}{regVal}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

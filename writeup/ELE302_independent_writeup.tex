@@ -61,8 +61,13 @@ We used two Pixy cameras (CMUcam5) placed a fixed distance apart on the robot to
 
 The speed and flexibility of movement we needed (we had to move up to 3 feet in less than half a second) required us to abandon the chassis used for our previous speed control and navigation assignments and adopt the large and powerful omni-wheel drive used by Ethan Gordon and Luke Pfleger in 2016. We used an accelerometer and gyroscope for dead reckoning of position (we could no longer use wheel rotation tracking because of slippage). In addition, we continued to use the PSoC 5LP because of its extensive motor control capacity (we required four PWM modules) while adding a Raspbery Pi 3 Model B because of the intensive computation we expected to require for ball tracking and trajectory estimation.
 
+\clearpage
+\tableofcontents
+
+\clearpage
 \section{Theory}
 \subsection{Stereo vision}
+\label{sec:stereo}
 We used a pinhole camera model for our Pixy cameras. Under this model, points in 3-D world coordinates are projected onto an imaging plane using homogenous coordinates. In the simplified case when the camera is at the origin pointing in the positive $z$ direction (i.e. the image plane is at $z=1$), we convert from world coordinates $(x, y, z)^T$ to image coorinates $(m, n)^T$ using basic linear algebra. First, we define $\paren{x', y', z'}^T$ as follows:
 \begin{align*}
     \pmat{x' \\ y' \\ z'} &= \pmat{f_x & 0 & c_x \\ 0 & f_y & c_t \\ 0 & 0 & 1} \pmat{x \\ y \\ z} \\
@@ -94,6 +99,7 @@ For trajectory estimation and prediction, we used only world coordinates to avoi
 It is important to note that the Pixy camera is not an ideal pinhole camera. Critically, it exhibits radial distortion. We attempted correcting for this by calibrating using MATLAB's camera calibration methods (e.g. the \verb|cameraCalibrator| app), but we found little significant improvement in position estimation, and the small position differences from the distorted image and coordinates were sufficient for our purposes.
 
 \subsection{Trajectory estimation and prediction}
+\label{sec:trajectory}
 Trajectory estimation is the process of performing statistical estimation of kinematic parameters, such as initial position and velocity in all three spatial dimensions, and acceleration in the world $z$-axis. Among our many design iterations, we also estimated the coefficient of restitution from our observed data. We approached trajectory estimation with a linear regression model with various modifications, and then used the estimated kinematic parameters to estimate the time and location of bounces (i.e. perform trajectory prediction). We decided to use regression instead of finite difference methods because we expected our stereo ball tracking data to be rather noisy (finite differences tend to amplify high-frequency noise).
 
 We divided our model of the ball's trajectory into the global $x$, $y$ and $z$ coordinates (relative to the robot, since we simplified our problem by tracking the ball only while the robot was stationary). For the $x$ and $y$ coordinates, we performed simple linear regression over all detected ball positions:
@@ -133,6 +139,7 @@ However, this introduced a new free parameter, $R$, that happens to be critical 
 Finally, once the kinematic parameters were estimated, it was trivial to predict the location of the ball in global coordinates for any point in time in the future. Specifically, the landing location could be estimated by computing the roots of the $z$ polynomial, and by simple extension, the location of the ball at any height (since our paddle was vertically fixed) could be estimated using some more quadratic formulas.
 
 \subsection{Omni-drive}
+\label{sec:omni}
 Let $\theta$ be the angle between global forward (the y-axis in \figref{fig:omni1}) and the current orientation of the robot (the direction specified by the line labeled ``F'' on the robot in \figref{fig:omni1}). Let $\alpha$ be the angle between global forward and the desired heading (the green line in \figref{fig:omni1}).
 \begin{figure}[ht]
     \centering
@@ -158,6 +165,7 @@ When the car is rotating, the average of $M2$ and $M4$ remains constant for any 
 The final equation of motion is simply a constant that $\max\brace{M1, M2, M3, M4} = M$, where $M$ is the magnitude of movement in the direction specified by $\beta$. Together, these three equations, functions of $\alpha$, $\theta$, $s$, and $M$, fully specify the control of the four wheels.
 
 \subsection{Accelerometer}
+\label{sec:accel}
 An accelerometer measures acceleration relative to its own orientation. Therefore, as the robot spins and the accelerometer spins with it, the accelerometer will not be measuring acceleration in a consistent direction. To get meaningful readings from the accelerometer, we need to use information about our orientation from the gyroscope to correctly project the accelerometer’s acceleration readings to global, constant axes. Further, the accelerometer is not mounted at the center of the robot, so as the robot spins, centrifugal force will add a false acceleration to the accelerometer. This acceleration needs to be subtracted off to get accurate readings.
 
 Let $x\sub{raw}$ and $y\sub{raw}$ be the original readings of the accelerometer. First, we need to subtract off the effect of centrifugal force. As in \figref{fig:accel1}, let the angle between the negative $y$-axis and the accelerometer be $\alpha$, the distance between the center of mass of the robot and the accelerometer be $r$, and the rate of rotation be $\omega$. Then \[x_1 = x\sub{raw} + r{\omega^2}\cos{\alpha}\] and \[y_1 = y\sub{raw} + r{\omega^2}\sin{\alpha},\] where $x_1$ and $y_1$ are the adjusted accelerations.
@@ -218,7 +226,6 @@ With these calculations, the global $x$ and $y$ accelerations can be double inte
 \begin{figure}[ht]
     \centering
     \includegraphics[width=0.85\textwidth]{images/BlockDiagram.pdf}
-    %TODO: block diagram
     \caption{\textbf{Block diagram of the hardware setup for ping pong.} Black connections indicate ground connections; red connections indicate power (both regulated and unregulated); all other connections indicate data connections (e.g. from the PSoC to the H-bridges and servo, various \iic connections). Green components indicate power-related components; red components indicate actuators; blue components indicate sensors.}
     \label{fig:blockdiagram}
 \end{figure}
@@ -246,16 +253,15 @@ An omni-drive requires 4 independent controllers capable of driving forwards and
 
 \begin{figure}[ht]
     \centering
-    \begin{subfigure}[t]{0.48\textwidth}
+    \begin{subfigure}[t]{0.33\textwidth}
         \centering
-        \includegraphics[height=0.4\textheight]{images/hbridge.pdf}
+        \includegraphics[height=0.3\textheight]{images/hbridge.pdf}
         \caption{H-bridge dummy circuit diagram.}
         \label{fig:hb-dummy}
     \end{subfigure}\hfill
-    \begin{subfigure}[t]{0.48\textwidth}
-        \includegraphics[height=0.4\textheight]{images/hbridge-circuit.pdf}
+    \begin{subfigure}[t]{0.66\textwidth}
+        \includegraphics[height=0.3\textheight]{images/hbridge-circuit.pdf}
         \caption{Actual H-bridge circuit diagram.}
-        %TODO: this image
         \label{fig:hb-circuit}
     \end{subfigure}
     \caption{\textbf{H-bridge circuit diagrams.}}
@@ -277,7 +283,23 @@ We chose to use phase-magnitude drive, if only for the simple reason that it is 
 The specific details of the control signals \texttt{C1} and \texttt{C2} required to drive the H-bridge in sign-magnitude mode will be given when we discuss the hardware programmable hardware required to implement them in \secref{sec:prog-hard-motor}.
 
 \subsection{Dead reckoning}
-Since the very principle of an omni-drive's motion is dependent on the wheels slipping, we cannot track the wheels' motion to determine the position of our robot. Instead, we use dead reckoning. To implement dead reckoning, we use a 9-DOF combined accelerometer, gyroscope, and magnetometer, the LSM9DS0 chip from ST Microelectronics, mounted on an Adafruit breakout board. This chip communicates with the PSoC through \iic.
+Since the very principle of an omni-drive's motion is dependent on the wheels slipping, we cannot track the wheels' motion to determine the position of our robot. Instead, we use dead reckoning. To implement dead reckoning, we use a 9-DOF combined accelerometer, gyroscope, and magnetometer, the LSM9DS0 chip from ST Microelectronics, mounted on an Adafruit breakout board. This chip communicates with the PSoC through \iic. See \figref{fig:accel-board} for a photograph and a circuit diagram of the accelerometer/gyroscope board:
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.4\textheight]{images/accel.JPG}
+        \caption{Photograph of the accelerometer board.}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.4\textheight]{images/accel-schematic.pdf}
+        \caption{Circuit diagram of the accelerometer board.}
+    \end{subfigure}
+    \caption{\textbf{Detail of the accelerometer board.}}
+    \label{fig:accel-board}
+\end{figure}
 
 \subsection{Cameras and mast}
 The CMUcam5 (Pixy camera, or simply ``Pixy'') is a low-cost computer vision system developed by CMU and Charmed Labs that can be easily trained to recognize colored objects. The Pixy uses the OV9715 CMOS WXGA (1-MP) image sensor, which supports $1280\times 800$ resolution at \SI{25}{fps} or $640\times 400$ resolution at \SI{50}{fps}. Because of the memory limitations of the on-board microcontroller and to achieve the higher frame rate, the CMUcam5 default firmware restricts the resolution to $640\times 400$. Furthermore, the object detection algorithm outputs object coordinates and dimensions at $320\times 200$ resolution.
@@ -300,9 +322,23 @@ The inner mount was made in two halves so that we could simply screw each half i
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.7\textwidth]{images/paddle.png}
-    %TODO: this image
-    \caption{\textbf{Images of 3D-printed paddle mount parts.}}
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.25\textheight]{images/outer-mount1.png}
+        \caption{Outer cylinder mount, front diagonal view.}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.25\textheight]{images/outer-mount2.png}
+        \caption{Outer cylinder mount, back diagonal view.}
+    \end{subfigure}
+
+    \begin{subfigure}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[height=0.25\textheight]{images/inner-mount.png}
+        \caption{One half of the inner cylinder mount for the paddle.}
+    \end{subfigure}
+    \caption{\textbf{CAD images of 3-D-printed paddle mount parts.} Models were created in Creo and exported to \texttt{.stl} files for 3-D printing.}
     \label{fig:paddle}
 \end{figure}
 
@@ -310,8 +346,8 @@ The mount had to fit in a very tight area, so to avoid having to go through many
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=0.7\textwidth]{images/mock.png}
-    %TODO: this image
+    \includegraphics[width=0.7\textwidth]{images/test-assembly.png}
+    \caption{\textbf{Wireframe mock model of robot for paddle mount assembly.} This model depicts the top and bottom decks, clearance boxes, and the paddle mount assembly. Inner mount is green; outer mount is blue; servo is red; other important areas for clearance (i.e. H-bridges) are in transparent gray.}
     \caption{\textbf{Wireframe mock model of robot for paddle mount assembly.}}
     \label{fig:mock}
 \end{figure}
@@ -337,25 +373,16 @@ Phase-magnitude drive requires a PWM signal where the ``on'' time signal drives 
 
 This, then, breaks the control into two very natural signals, direction and magnitude. The PWM signal controls the magnitude of rotation, and changing which terminal it goes into controls the direction of rotation. We implemented this scheme in the programmable hardware with PWM blocks and demultiplexers (i.e., switches). There is one PWM block per motor, and each PWM block outputs into a demultiplexer which selects between forward and reverse based on a software control signal. The software control signals come from the \verb|Control_Reg_Direction| block. This is the complete picture of the control at a high level, but a couple more additions were required to make it actually work. The final control signal outputs of the PSoC are open drain, so ``on'' corresponds to a low signal and ``off'' corresponds to a high signal. Demuxes output low on all unused inputs, which is the opposite behavior to what is desired, so we had to invert all of the demux outputs to make them default to floating rather than pulling low. This also had the convenient effect of making the high side of the PWM signal correspond to driving the output low, which is what turns the motor on, so on the software side, the duty cycle maps directly to throttle rather than inversely.
 
-
 \subsubsection{Other hardware}
-The servo that controls the angle of the paddle is directly controlled by a single PWM block, \verb|PWM_Servo|. We continued to use a UART block to communicate with our computers for debugging, and added a second, \verb|Serial_Pi| to communicate with the Raspberry Pi. We also have a master I2C block that manages communication with the accelerometer/gyro chip. There is also a counter block, \verb|Counter_Refresh|, which is used as a refresh timer. It interrupts at a rate of \SI{1}{\kilo\hertz}. Finally, we have another counter, \verb|Counter_Time|, on a slower clock, that is used to accurately keep track of time.
-
-\section{Software for PSoC}
-
-\subsection{Omni-drive control}
-%TODO: TJ
-
-\subsection{Dead reckoning}
-%TODO: TJ
-
-\subsection{Paddle mount servo control}
-%TODO: TJ
+The servo that controls the angle of the paddle is directly controlled by a single PWM block, \verb|PWM_Servo|. We continued to use a UART block to communicate with our computers for debugging, and added a second, \verb|Serial_Pi| to communicate with the Raspberry Pi. We also have a master \iic block that manages communication with the accelerometer/gyro chip. There is also a counter block, \verb|Counter_Refresh|, which is used as a refresh timer. It interrupts at a rate of \SI{1}{\kilo\hertz}. Finally, we have another counter, \verb|Counter_Time|, on a slower clock, that is used to accurately keep track of time.
 
 \section{Software for Raspberry Pi}
 \subsection{Pixy camera communication}
-Initially, to implement SPI communication with a single Pixy camera, we adapted the code from this GitHub repository: \url{https://github.com/omwah/pixy_rpi}. This has an implementation of SPI communication using \verb|wiringPiSPI.h| from the \verb|WiringPi| library by Gordon Henderson, as well as a general Pixy data processing interface using the object block format found in the Porting Guide of the Pixy camera: \url{http://cmucam.org/projects/cmucam5/wiki/Porting_Guide}. The files are organized such that \verb|Pixy.h| defines the class \verb|LinkSPI|, which abstracts the communciation protocol with the SPI interface, \verb|TPixy.h| defines the class \verb|TPixy|, which abstracts the object block protocol further and maintains a buffer of received blocks, and \verb|echo.cpp| uses the \texttt{TPixy} class defined in \texttt{TPixy.h} to echo blocks to standard output. Abstracted in this way, the client code becomes very simple:
-\begin{minted}[breaklines]{c}
+Initially, to implement SPI communication with a single Pixy camera, we adapted the code from this GitHub repository: \url{https://github.com/omwah/pixy_rpi}. This has an implementation of SPI communication using \verb|wiringPiSPI.h| from the \verb|WiringPi| library by Gordon Henderson, as well as a general Pixy data processing interface using the object block format found in the Porting Guide of the Pixy camera: \url{http://cmucam.org/projects/cmucam5/wiki/Porting_Guide}.
+
+The files are organized such that \verb|Pixy.h| defines the class \verb|LinkSPI|, which abstracts the communciation protocol with the SPI interface, \verb|TPixy.h| defines the class \verb|TPixy|, which abstracts the object block protocol further and maintains a buffer of received blocks, and \verb|echo.cpp| uses the \texttt{TPixy} class defined in \texttt{TPixy.h} to echo blocks to standard output. In the terms of protocol stack models, \verb|WiringPi| (implementing SPI/\iic), \verb|LinkSPI|, and \verb|TPixy| implement sequentially higher protocol layers. Abstracted in this way, the client code becomes very simple:
+
+\begin{minted}[breaklines]{cpp}
 #include <Pixy.h>
 
 Pixy pixy;
@@ -379,88 +406,303 @@ int main() {
 }
 \end{minted}
 
-As mentioned earlier, however, SPI proved not flexible enough for communication with two Pixy cameras---at least in the \texttt{WiringPi} implementation of the SPI library---so we transitioned to \iic. This transition ended up being rather simple, because we only had to change a handful of functions to handle the difference in endianness, and to use the \verb|WiringPiI2C.h| header instead. The full implementation communication code can be found in the appendix.
+As mentioned earlier, however, SPI proved not flexible enough for communication with two Pixy cameras---at least in the \texttt{WiringPi} implementation of the SPI library---so we transitioned to \iic. This transition ended up being rather simple, because we only had to change a handful of functions to handle the difference in endianness, and to use the \verb|WiringPiI2C.h| header instead. In order to do this, we modified \verb|LinkSPI| to \verb|LinkI2C|. The fully implemented communication code can be found in the appendix.
 
 \subsection{Stereo vision}
-%TODO: BC
+Most of the code for stereo vision is direct implementation of the theory. To aid the implementation, I first defined a \verb|Point3D| class that represents a point with $x$, $y$, $z$ coordinates and $t$ for time, with basic binary operations and methods such as Euclidean distance and norm:
+\begin{minted}[breaklines]{cpp}
+struct Point3D {
+    private:
+        double x, y, z, t;
+    public:
+        /* Constructors */
+        Point3D() :
+            x(0), y(0), z(0), t(0) {};
+
+        Point3D(double _x, double _y, double _z) :
+            x(_x), y(_y), z(_z), t(0) {};
+
+        Point3D(double _x, double _y, double _z, double _t) :
+            x(_x), y(_y), z(_z), t(_t) {};
+
+        /* Getters */
+        double getX() { return x; }
+        double getY() { return y; }
+        double getZ() { return z; }
+        double getT() { return t; }
+
+        /* Operator overloads */
+        // Addition and subtraction
+        Point3D operator+(const Point3D& p);
+        Point3D operator-(const Point3D& p);
+        // Scalar multiplication and division
+        Point3D operator*(const double s);
+        Point3D operator/(const double s);
+
+        /* Methods */
+        double maxAbsSpatial();
+        double distTo(Point3D& p);
+        double norm();
+};
+\end{minted}
+The most challenging part of implementing stereo vision was identifying which pairs of identified objects (if more than one) correspond to each other. Because the image processing was implemented in the Pixy cameras' hardware, the time to process each possible pair of points (on the order of $n^2$ pairs) was in practice less than \SI{1e-4}{s}. Therefore, we would have plenty of time to examine the top approximately $10$ points from each camera; in practice, the number of points detected was on the order of $3$--$5$ points at most.
+
+The strategy for filtering valid pixels followed several steps:
+\begin{enumerate}[label=\textbf{Step \arabic*.}]
+    \item Examine all pairs of points detected, and filter roughly round objects, according to some fractional tolerance. If it passes the roundness criterion, we add this pair as a ``plausible pair'' to the queue of pairs to process with the stereo code:
+        \begin{minted}[breaklines]{cpp}
+std::queue<std::pair<int, int> > plausiblePairs;
+for (int ind0 = 0; ind0 < nBlocks0; ind0++) {
+    for (int ind1 = 0; ind1 < nBlocks1; ind1++) {
+        int w0 = pixy0.blocks[ind0].width;
+        int h0 = pixy0.blocks[ind0].height;
+        int w1 = pixy1.blocks[ind1].width;
+        int h1 = pixy1.blocks[ind1].height;
+
+        // Filter roughly round objects
+        if (!(w0 * (1.0 - SIZE_TOL) < h0 && h0 < w0 * (1.0 + SIZE_TOL))) {
+            continue;
+        }
+        if (!(w1 * (1.0 - SIZE_TOL) < h1 && h1 < w1 * (1.0 + SIZE_TOL))) {
+            continue;
+        }
+
+        // Add plausible pair to queue (implicitly in decreasing order of size)
+        plausiblePairs.push(std::make_pair(ind0, ind1));
+    }
+}
+        \end{minted}
+    \item For each plausible pair, calculate the position in global coordinates (in mm) with the formulas derived in \secref{sec:stereo}. We then validate with the results from this calculation: if $z\sub{camera} = y\sub{world} < 0$, or if $z\sub{camera}$ exceeds some maximum, or if the calculated width/height does not match the expected width/height of the ball.
+        \begin{minted}[breaklines]{cpp}
+/* Validate with stereo results */
+if (x_diff < 0) { // x_diff makes no sense
+    continue;
+}
+if (z_world > Z_MAX) { // max z
+    continue;
+}
+if (!(BALL_DIAM * (1.0-SIZE_TOL) < real_w && real_w < BALL_DIAM * (1.0+SIZE_TOL))) {
+    // wrong width
+    continue;
+}
+if (!(BALL_DIAM * (1.0-SIZE_TOL) < real_h && real_h < BALL_DIAM * (1.0+SIZE_TOL))) {
+    // wrong height
+    continue;
+}
+        \end{minted}
+    \item Finally, validate any remaining pairs with trajectory prediction. We use the most recent kinematic coefficients to predict the location of the ball at the current time; if the observed point in world coordinates exceeds the expected position by some threshold, we disregard the data point.
+        \begin{minted}[breaklines]{cpp}
+/* Validate with trajectory prediction */
+Point3D ptExp;
+// don't check trajectory if we don't have a reliable model
+if (points.size() >= MIN_REGRESSION_POINTS) {
+    // Max change in position from expected next position
+    Point3D ptFirst = points.front();
+    double t_first = ptFirst.getT();
+    ptExp = predictPosition(beta_x, beta_y, beta_z, beta_R, ptFirst, t_elapsed);
+    // Current ball position is too far from expected position
+    if ((ptNow - ptExp).maxAbsSpatial() > MAX_POS_DIFF) {
+        continue;
+    }
+}
+        \end{minted}
+        If we miss too many points, we throw away the current model and start over in the hopes that we capture the ball more accurately next time.
+\end{enumerate}
+
+Once a pair of points has passed these validation steps, we consider it accepted, and add it to our buffer of accepted points for regression.
 
 \subsection{Trajectory estimation}
-%TODO: BC
+If the number of points is at least some reasonable number of points to perform regression on, we populate our observation matrices and response vectors for linear regression:
+\begin{minted}[breaklines]{cpp}
+// Calculate bounce time
+double t_bounce = predictBounceTime(beta_z, points.front().getZ());
+// Regress using current coefficient of restitution
+double new_beta_R = beta_R;
+/* Populate predictor matrices and response vectors */
+arma::mat t(points.size(), 2); // for global x, y
+arma::mat t2(points.size(), 3); // for global z
+arma::vec res_x(points.size()); // global x
+arma::vec res_y(points.size()); // global y
+arma::vec res_z(points.size()); // global z
+for (int i = 0; i < points.size(); i++) {
+    // Populate predictor matrices
+    t(i, 0) = 1; // constant for bias/offset
+    t2(i, 0) = 1;
+    t(i, 1) = points[i].getT() - points.front().getT(); // t (linear term)
+    t2(i, 1) = t(i, 1);
+    t2(i, 2) = std::pow(t2(i, 1), 2); // t^2 (quadratic term)
+
+    // Populate response vectors
+    res_x(i) = points[i].getX();
+    res_y(i) = points[i].getY();
+    res_z(i) = points[i].getZ();
+
+    // Has it bounced?
+    if (t(i, 1) > t_bounce) { // If so...
+        // Transform z, t to lie on the original parabola
+        double tnew = t_bounce - (t(i, 1) - t_bounce) / std::sqrt(new_beta_R);
+        double znew = res_z(i) / new_beta_R;
+        t2(i, 1) = tnew;
+        t2(i, 2) = std::pow(tnew, 2);
+        res_z(i) = znew;
+        res_z(i) = (beta_z(1) + (1-std::sqrt(beta_R))*beta_z(2)*t_bounce) * t(i, 1) - res_z(i);
+    }
+}
+\end{minted}
+
+Note that for speed, we are using the Armadillo linear algebra library (hence the \verb|arma::mat| and \verb|arma::vec|). This is particularly important in the following step:
+\begin{minted}[breaklines]{cpp}
+/* Perform regression to estimate new kinematic coefficients */
+arma::vec beta_x = (t.t() * t).i() * t.t() * res_x;
+arma::vec beta_y = (t.t() * t).i() * t.t() * res_y;
+arma::vec beta_z = (t2.t() * t2).i() * t2.t() * res_z;
+\end{minted}
+The Armadillo library compiles consecutive linear algebra operations into a single operation in order to optimize performance. This operation is slower when done using standard \texttt{for} loops.
+
+We then validate our results from regression: if the $t^2$ coefficient from the $z$-coordinate regression is too low (i.e. the ball appears to not be falling fast enough), we recognize that regression is not functioning correctly, so we flush the point buffer and start over. Unlike previous validation steps, however, since we have accepted this current point, we do not reject the point. Instead, we add it back to the point buffer and wait for more points to be accepted into the point buffer.
+
+After linear regression is complete, we predict the newly updated bounce location (or the location that the robot needs to move to in order to hit the ball with the paddle) using the new kinematic coefficients. All of this is some pretty ugly C++ implementation of the equations in \secref{sec:trajectory}, so the code is reproduced in full in the appendix. Here, we provide the two shortest methods for predicting the bounce time and position:
+\begin{minted}[breaklines]{cpp}
+// Predict time when ball will first bounce
+//   bz: 3-vector, z coefficients for naive kinematic fit
+double predictBounceTime(arma::vec& bz, double z0) {
+    // Solves quadratic equation
+    //   z(t) = z(0) + vz(0) t + 0.5 g t^2 = 0
+    double g = bz(2) * 2; // G_ACC * 1000;
+    return (-1.0 / g) * (bz(1) + std::sqrt(std::pow(bz(1), 2) - 2 * g * (z0 - BALL_DIAM / 2)));
+}
+
+// Predict location of first bounce
+//   bx, by, bz: vectors of length 2, 2, 3 respectively;
+//               coefficients of naive kinematic fit
+//   pt1: position of ball at time 0; point on which bx, by, bz are based
+Point3D predictBounceLocation(arma::vec& bx, arma::vec& by, arma::vec& bz,
+        Point3D& pt1) {
+    double t_bounce = predictBounceTime(bz, pt1.getZ());
+    double newx = pt1.getX() + bx(1) * t_bounce;
+    double newy = pt1.getY() + by(1) * t_bounce;
+    double newz = pt1.getZ() + bz(1) * t_bounce
+        + bz(2) * std::pow(t_bounce, 2);
+
+    return Point3D(newx, newy, newz, t_bounce);
+}
+\end{minted}
+
+
+\section{Software for PSoC}
+
+\subsection{Motor control}
+The low-level motor control is handled by the function \verb|drive()|. It simply takes a magnitude and direction for each motor and interfaces with the programmable hardware to do it.
+
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/excerpts/drive.c}
+\end{mdframed}
+
+The high level drive control is in the function \verb|driveMagPhase()|, and implements the equations discussed in \secref{sec:omni}. \verb|driveMagPhase()| implements the equations in terms of the dominant (i.e. greatest absolute magnitude) motor. The dominant partner is then the motor on the same axis as the dominant motor. The off dominant motor is the motor of greatest magnitude on the other axis, and the off dominant partner is the remaining motor. The first half of the function uses some bit masking to determine which motor is the dominant one, first by figuring out which axis is dominant, and then figuring out which motor on that axis has the greater magnitude. Once these designations have been found, the magnitudes and directions of each motor can be calculated basically independently. The magnitude of the dominant motor is $\max\paren{1, M + \abs{x}}$, the magnitude of the dominant partner is $\abs{M\sub{dominant} - 2\abs{s}}$, the magnitude of the off dominant motor is $\paren{M\sub{dominant} - \abs{s}}a + \abs{s}$, where 
+\[ a = \min\paren{\abs{\tan\paren{\alpha - \theta + \frac{\pi}{4}}}, \xth{\abs{\tan\paren{\alpha - \theta + \frac{\pi}{4}}}}},\]
+and the magnitude of the off dominant partner is $\paren{M\sub{dominant} - \abs{s}}a - \abs{s}$.
+
+Then the function uses some of the bit masks from earlier to find the final directions of each motor, and sends the completed direction-magnitude pairs to \verb|drive()|.
+
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/excerpts/driveMagPhase.c}
+\end{mdframed}
+
+\subsection{Dead reckoning}
+Reading the accelerometer and gyroscope is handled by the \verb|accel.c| file, which is loosely ported from an Adafruit library. The \verb|Accel_init()| function sets up the accelerometer and gyroscope. It sets the sample rate of the accelerometer, enables $x$, $y$, and $z$ directions, and sets its range to $\pm 2g$. It also enables the gyro channels, sets up the limits for the built-in low- and high-pass filters, and sets its range to $\pm \SI{245}{\degree\per\second}$. The high-pass filter cutoff is \SI{7.2}{Hz}, which kills any drift in the gyroscope readings. There are many private helper functions that handle the details of the \iic interface and getting the raw data from the accelerometer and gyroscope. 
+
+The data from the accelerometer, though, is very noisy, so we do a fair amount of noise reduction in the function \verb|Accel_refresh()|. This function is called periodically by \verb|main.c|, and is the main function used to update the sensor readings. The first part of the function is an initialization step. The function takes the first \verb|NUM_ZERO_READINGS|, $1000$, accelerometer readings and uses them to create denoising functions. First, we simply take the (3 dimensional) mean of all the readings and subtract that from all future readings. Unlike the gyro, the accelerometer does not have a built in high-pass filter, so we have to do this subtraction manually. 
+
+Next, we noticed that the noise in the $x$ and $y$ directions almost perfects anti-correlates with the noise in the $z$ direction as shown in \figref{fig:accel-plots}. Since we know that the $z$ acceleration should always be zero, we can use the $z$ acceleration reading to remove some of the noise from the $x$ and $y$ readings. Since our data after having the mean subtracted is zero centered, the correlations can simply be calculated by \[C_{xz} = \frac{x \cdot z}{\norm{z}^2}\] and \[C_{yz} = \frac{y \cdot z}{\norm{z}^2},\] where $x$, $y$, and $z$ are vectors of the readings. The readings can then be decorrelated as follows: $x\sub{decorr} = x - zC_{xz}$ and $y\sub{decorr} = y - zC_{yz}$. \figref{fig:accel-plots} shows the result of this decorrelation. The decorrelation reduces the noise of the sensor by about a factor of two. All of the preceding calculations had to be performed using integer arithmetic, since double arrays were too large to fit on the PSoC's limited memory.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/accel-plots.eps}
+    \caption{\textbf{Plots of accelerometer noise.} From left to right and top to bottom, uncorrected correlation between $x$ and $z$ (notice the negative correlation), corrected correlation between $x$ and $z$, uncorrected $x$ noise against time (in seconds), and corrected $x$ noise against time. In all these measurements, the robot was not moving, so all fluctuations were noise or minute vibrations in the ELE teaching lab. All accelerometer measurements are in milli-$g$s (1~milli-$g$ is \SI{9.81}{\milli\meter\per\second\squared}).}
+    \label{fig:accel-plots}
+\end{figure}
+
+Once the means and correlation coefficients have been calculated over the first \verb|NUM_ZERO_READINGS| readings, \verb|Accel_refresh()| simply gets new raw readings and corrects them according to the calculated means and correlation coefficients. The public functions \verb|Accel_getAccel()| and \verb|Accel_getGyro()| are then used to get the corrected readings.
+
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/excerpts/Accel_refresh.c}
+\end{mdframed}
+
+\verb|main.c| uses the \verb|Counter_Refresh| counter to call \verb|Accel_refresh()|, and to translate the raw accelerometer data into usable data as described in \secref{sec:accel}. The gyroscope returns angular velocity data, so it also runs a single integrator on the angular velocity to get angular position. The integrators are discrete, and since the integration is done at a regular interval, they only need to keep a running sum, multiplied by the time between sums.
+
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/excerpts/accel_gyro_handling.c}
+\end{mdframed}
+
+\subsection{Fine tuning control}
+During testing, we noticed that if the car went to full speed immediately, it would slip a lot before it got traction. We decided the best way to limit this effect would be to put a cap on the maximum allowed acceleration. Since the motor speeds need to be updated very frequently (all the equations described above and in \secref{sec:omni} are only valid instantaneously), we simply implemented the acceleration cap in the same spot as we updated the motor speeds. We run through the update loop 100 times per second, so we simply keep track of the directional magnitude ($M$, in all the equations) at the last loop, and do not let the new directional magnitude exceed the old one by more than some fixed amount $A$. We settled on using $A = 0.03$, which allows the car to reach full speed in \SI{0.33}{s}.
+
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/excerpts/accelLimit.c}
+\end{mdframed}
+
+The final major part of this system is to command the robot to drive to a given location in global coordinates. With an omni-drive, this is actually very easy. It simply calculates the angle between the car's current position and the desired position, and then drives directly in that direction with a magnitude scaled by the distance left. It updates the required position and magnitude 100 times per second, so it continuously corrects for any errors in the drive. Once the car reaches the target location within a set margin, \SI{5}{\centi\meter}, for our final tests, it stops. Since our goal was to be able to hit a ping ping ball, this code also contains a small ``flick'' routine. Given a time at which to flick, the robot will start rotating just before the target time, and stop rotating at the target time, creating a small flicking motion designed to hit the ball. We also added a safety timeout to this code to automatically stop if the target had not been reached in 2 seconds, to stop runaway behavior.
+
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/excerpts/goToTarget.c}
+\end{mdframed}
 
 \subsection{Serial communication}
-%TODO: update (TJ)
-We continued to use serial communication extensively to debug the camera and navigation portions of our program and to adjust our PID variables. We also moved to using the DB9 header only for bench testing and a wireless XBee serial communication chip for track testing. We changed nearly no code or programmable hardware to move to the XBee, since it relied on the same UART communication as the DB9.
-
-We heavily updated our list of serial commands to improve memorability and consistency, and to expand to control camera and navigation parameters. Our updated commands are listed in \tblref{tbl:commands}.
+We used serial communication both for debugging and for communicating between the PSoC and the Raspberry Pi. \tblref{tbl:commands} shows all the serial commands used.
 \begin{table}[ht]
     \centering
     \begin{tabular}{@{}ll@{}}
         \toprule
         \textbf{Command} & \textbf{Description} \\ \midrule
-        \texttt{CTx} & Change throttle \\
-        \texttt{GS} & Get all variables associated with speed control \\
-        \texttt{TS} & Toggle speed PID control \\
-        \texttt{TDC} & Toggle distance timeout for speed control \\
-        \texttt{TDS} & Toggle dynamic speed control \\
-        \texttt{CPSx} & Change proportional term for speed control \\
-        \texttt{CISx} & Change integral term for speed control \\
-        \texttt{CDSx} & Change derivative term for speed control \\
-        \texttt{CSSx} & Change steady-state throttle for speed control \\
-        \texttt{CTSx} & Change target speed for speed control \\
-        \texttt{CTDx} & Change target distance for speed control \\
-        \texttt{TVS} & Toggle verbose printout for speed PID control \\ \midrule
-        \texttt{GC} & Get all camera variables \\
-        \texttt{RC} & Reset camera variables \\
-        \texttt{CSx} & Change steering/servo direction \\
-        \texttt{CMMx} & Change maximum permitted line misses \\ \midrule
-        \texttt{TN} & Toggle navigation PID control \\
-        \texttt{CPLx} & Change proportional term for line position error \\
-        \texttt{CILx} & Change integral term for line position error \\
-        \texttt{CIILx} & Change double integral term for line position error \\
-        \texttt{CDLx} & Change derivative term for line position error \\
-        \texttt{CPTx} & Change proportional term for angle error \\
-        \texttt{CITx} & Change integral term for angle error \\
-        \texttt{CDTx} & Change derivative term for angle error \\
-        \texttt{CTSNx} & Change nominal target speed for navigation \\
-        \texttt{TLE} & Toggle line error tracking \\
-        \texttt{TVN} & Toggle verbose printout for navigation PID control \\ \midrule
-        \texttt{A} & Abort (kill speed and navigation PID control) \\ \bottomrule
+        \texttt{CTx.y} & Set motor \texttt{x} to throttle \texttt{y} \\
+        \texttt{CPx} & Set motor PWM period to \texttt{x} \\ \midrule
+        \texttt{w} & Drive forward \\
+        \texttt{s} & Drive backward \\
+        \texttt{a} & Drive left \\
+        \texttt{d} & Drive right \\
+        \texttt{q or Q} & Stop \\
+        \texttt{c} & Rotate right \\
+        \texttt{z} & Rotate left \\
+        \texttt{x} & Stop rotating \\
+        \texttt{CMx} & Change magnitude of driving to \texttt{x} \\
+        \texttt{CHx} & Change heading of driving to \texttt{x} (in radians) \\
+        \texttt{CRx} & Set rotation speed to \texttt{x} \\ \midrule
+        \texttt{R} & Reset inertial tracking \\
+        \texttt{P} & Print inertial tracking variables \\
+        \texttt{EG} & Enable gyro \\
+        \texttt{DG} & Disable gyro \\
+        \texttt{EAL} & Enable acceleration limit \\ \midrule
+        \texttt{DAL} & Disable acceleration limit \\
+        \texttt{SALx} & Set acceleration limit to \texttt{x} \\
+        \texttt{GO(x, y, t, $\theta$)} & Go to position $(x, y)$ within time $t$ and set paddle angle to $\theta$ \\
+        \texttt{CTMx} & Change stop margin for arriving at target to \texttt{x} \\
+        \texttt{SFT} & Set time of rotation need for flicking to \texttt{x} \\ \bottomrule
     \end{tabular}
     \caption{\textbf{Table of serial interface commands.}}
     \label{tbl:commands}
 \end{table}
 
-\section{Results}
-See \tblref{tbl:pid} for the final PID coefficients we used. We updated our coefficients from speed control because we are no longer dynamically updating the target speed to reach the distance in a specific time. We used only the proportional and derivative terms for line position and angle (no integral terms), and unfortunately, despite our efforts to calculate it accurately, the angle contributed very little to our control. Given more time, we may have been able to develop a better system of control to more robustly control steering at higher speeds.
-\begin{table}[ht]
-    \centering
-    \begin{tabular}{@{}rlll@{}}
-        \toprule
-        & \textbf{P} & \textbf{I} & \textbf{D} \\ \midrule
-        Speed control & $80.0$ & $1.0$ & $10.0$ \\
-        Line position & $3.0$ & $0.0$ & $2.0$ \\
-        Line angle & $0.5$ & $0.0$ & $0.0$ \\ \bottomrule
-    \end{tabular}
-    \caption{\textbf{Final PID coefficients}}
-    \label{tbl:pid}
-\end{table}
-
-See \tblref{tbl:times} for our final times for one lap. The highest speed we managed to achieve was with a nominal \SI{6.0}{ft/s}, though by reducing speed while turning corners, our average speed was only about \SI{5.4}{ft/s}. We were unfortunately unable to consistently replicate this speed, and we performed our demo with a nominal target speed of \SI{4.0}{ft/s}.
-\begin{table}[ht]
-    \centering
-    \begin{tabular}{@{}lll@{}}
-        \toprule
-        \textbf{Nominal target speed} & \textbf{Time for one lap} & \textbf{Average lap speed} \\ \midrule
-        \SI{4.0}{ft/s} & \SI{28}{s} & \SI{3.8}{ft/s} \\
-        \SI{5.0}{ft/s} & \SI{22}{s} & \SI{4.9}{ft/s} \\
-        \SI{6.0}{ft/s} & \SI{19.96}{s} & \SI{5.4}{ft/s} \\ \bottomrule
-    \end{tabular}
-    \caption{\textbf{Time trial results}}
-    \label{tbl:times}
-\end{table}
-
+\clearpage
 \section{Further work}
-%TODO: BC: more robust ball tracking, more robust movement accuracy and location tracking, more robust UART communication, some sort of PID control with global coordinates and camera coordinates so that position could be updated in real time
+In the end, we were able to somewhat accurately predict the location of a ping pong ball when thrown to the robot, but both the trajectory estimation and movement control were too slow (the ball had moved too far before we knew where to move, and we couldn't move there in time) to consistently hit the ball. With a larger red ball (such as a dodgeball), we were able to more consistently detect and move to the landing position, but there was a lot of room for improvement.
+
+If we could work on this project further, we would have liked:
+\begin{itemize}
+    \item Clearer and more precise object detection, perhaps using higher resolution cameras and performing our own image processing;
+    \item More robust ball tracking, perhaps using better trajectory prediction and validation methods;
+    \item More robust location tracking, perhaps using a different algorithm (or updating zero values of the accelerometer whenever we were stopped), or finding a better accelerometer, or using a line sensor for continual retuning, or abandoning dead reckoning altogether and adopting another form of position-finding;
+    \item More robust UART communication, since we encountered difficulties with received buffer overflows and symbol mismatches that caused characters to be missed in sending commands through serial interfaces;
+    \item Some form of PID control with a difference between global coordinates and camera coordinates, so that the landing position and target location of the robot could be updated in real time and so that the robot could move to the target location in time;
+    \item And various other niceties, such as figuring out a better way to accelerate without slipping, further denoising of the accelerometer, and correcting the gyroscope's drift on fast turns.
+\end{itemize}
+All in all, we thoroughly enjoyed this experience, and we would like to thank Professors Houck and Thompson for their dedication and willingness to help at all hours of the day, and all the graduate and undergraduate TAs for the same. This would not have been possible without you.
+
+\vfill
+\begin{flushright}
+    \textit{We pledge our honor that this project report represents our own work \\ in accordance with University regulations.} \\
+    \textbf{Byung-Cheol Cho} \\
+    \textbf{TJ Smith}
+\end{flushright}
 
 \clearpage
 \section{Appendix: full listings}
@@ -469,10 +711,64 @@ See \tblref{tbl:times} for our final times for one lap. The highest speed we man
 \cftsubsubsecindent 0pt
 \localtableofcontents
 
-\subsection{\texttt{main.c}}
-% \begin{mdframed}[backgroundcolor=bg]
-%     \inputminted[breaklines]{c}{files/main.c}
-% \end{mdframed}
+\subsection{Raspberry Pi: \texttt{pingpong.cpp}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{cpp}{files/rpi/pingpong.cpp}
+\end{mdframed}
 
+\subsection{Raspberry Pi: \texttt{Pixy.h}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{cpp}{files/rpi/Pixy.h}
+\end{mdframed}
+
+\subsection{Raspberry Pi: \texttt{TPixy.h}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{cpp}{files/rpi/TPixy.h}
+\end{mdframed}
+
+\subsection{Raspberry Pi: \texttt{timer.h}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{cpp}{files/rpi/timer.h}
+\end{mdframed}
+
+\subsection{PSoC: \texttt{main.c}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/psoc/main.c}
+\end{mdframed}
+
+\subsection{PSoC: \texttt{hardware.h}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/psoc/hardware.h}
+\end{mdframed}
+
+\subsection{PSoC: \texttt{accel.h}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/psoc/accel.h}
+\end{mdframed}
+
+\subsection{PSoC: \texttt{accel.c}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/psoc/accel.c}
+\end{mdframed}
+
+\subsection{PSoC: \texttt{serial.h}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/psoc/serial.h}
+\end{mdframed}
+
+\subsection{PSoC: \texttt{serial.c}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/psoc/serial.c}
+\end{mdframed}
+
+\subsection{PSoC: \texttt{serial\_pi.h}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/psoc/serial_pi.h}
+\end{mdframed}
+
+\subsection{PSoC: \texttt{serial\_pi.c}}
+\begin{mdframed}[backgroundcolor=bg]
+    \inputminted[breaklines]{c}{files/psoc/serial_pi.c}
+\end{mdframed}
 
 \end{document}

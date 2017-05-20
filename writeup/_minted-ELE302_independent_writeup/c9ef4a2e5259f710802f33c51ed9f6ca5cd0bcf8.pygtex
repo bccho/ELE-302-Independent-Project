@@ -1,0 +1,35 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{struct} \PYG{n}{Point3D} \PYG{p}{\PYGZob{}}
+    \PYG{k}{private}\PYG{o}{:}
+        \PYG{k+kt}{double} \PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{,} \PYG{n}{z}\PYG{p}{,} \PYG{n}{t}\PYG{p}{;}
+    \PYG{k}{public}\PYG{o}{:}
+        \PYG{c+cm}{/* Constructors */}
+        \PYG{n}{Point3D}\PYG{p}{()} \PYG{o}{:}
+            \PYG{n}{x}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{),} \PYG{n}{y}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{),} \PYG{n}{z}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{),} \PYG{n}{t}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+        \PYG{n}{Point3D}\PYG{p}{(}\PYG{k+kt}{double} \PYG{n}{\PYGZus{}x}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{\PYGZus{}y}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{\PYGZus{}z}\PYG{p}{)} \PYG{o}{:}
+            \PYG{n}{x}\PYG{p}{(}\PYG{n}{\PYGZus{}x}\PYG{p}{),} \PYG{n}{y}\PYG{p}{(}\PYG{n}{\PYGZus{}y}\PYG{p}{),} \PYG{n}{z}\PYG{p}{(}\PYG{n}{\PYGZus{}z}\PYG{p}{),} \PYG{n}{t}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+        \PYG{n}{Point3D}\PYG{p}{(}\PYG{k+kt}{double} \PYG{n}{\PYGZus{}x}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{\PYGZus{}y}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{\PYGZus{}z}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{\PYGZus{}t}\PYG{p}{)} \PYG{o}{:}
+            \PYG{n}{x}\PYG{p}{(}\PYG{n}{\PYGZus{}x}\PYG{p}{),} \PYG{n}{y}\PYG{p}{(}\PYG{n}{\PYGZus{}y}\PYG{p}{),} \PYG{n}{z}\PYG{p}{(}\PYG{n}{\PYGZus{}z}\PYG{p}{),} \PYG{n}{t}\PYG{p}{(}\PYG{n}{\PYGZus{}t}\PYG{p}{)} \PYG{p}{\PYGZob{}\PYGZcb{};}
+
+        \PYG{c+cm}{/* Getters */}
+        \PYG{k+kt}{double} \PYG{n+nf}{getX}\PYG{p}{()} \PYG{p}{\PYGZob{}} \PYG{k}{return} \PYG{n}{x}\PYG{p}{;} \PYG{p}{\PYGZcb{}}
+        \PYG{k+kt}{double} \PYG{n+nf}{getY}\PYG{p}{()} \PYG{p}{\PYGZob{}} \PYG{k}{return} \PYG{n}{y}\PYG{p}{;} \PYG{p}{\PYGZcb{}}
+        \PYG{k+kt}{double} \PYG{n+nf}{getZ}\PYG{p}{()} \PYG{p}{\PYGZob{}} \PYG{k}{return} \PYG{n}{z}\PYG{p}{;} \PYG{p}{\PYGZcb{}}
+        \PYG{k+kt}{double} \PYG{n+nf}{getT}\PYG{p}{()} \PYG{p}{\PYGZob{}} \PYG{k}{return} \PYG{n}{t}\PYG{p}{;} \PYG{p}{\PYGZcb{}}
+
+        \PYG{c+cm}{/* Operator overloads */}
+        \PYG{c+c1}{// Addition and subtraction}
+        \PYG{n}{Point3D} \PYG{k}{operator}\PYG{o}{+}\PYG{p}{(}\PYG{k}{const} \PYG{n}{Point3D}\PYG{o}{\PYGZam{}} \PYG{n}{p}\PYG{p}{);}
+        \PYG{n}{Point3D} \PYG{k}{operator}\PYG{o}{\PYGZhy{}}\PYG{p}{(}\PYG{k}{const} \PYG{n}{Point3D}\PYG{o}{\PYGZam{}} \PYG{n}{p}\PYG{p}{);}
+        \PYG{c+c1}{// Scalar multiplication and division}
+        \PYG{n}{Point3D} \PYG{k}{operator}\PYG{o}{*}\PYG{p}{(}\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{s}\PYG{p}{);}
+        \PYG{n}{Point3D} \PYG{k}{operator}\PYG{o}{/}\PYG{p}{(}\PYG{k}{const} \PYG{k+kt}{double} \PYG{n}{s}\PYG{p}{);}
+
+        \PYG{c+cm}{/* Methods */}
+        \PYG{k+kt}{double} \PYG{n+nf}{maxAbsSpatial}\PYG{p}{();}
+        \PYG{k+kt}{double} \PYG{n+nf}{distTo}\PYG{p}{(}\PYG{n}{Point3D}\PYG{o}{\PYGZam{}} \PYG{n}{p}\PYG{p}{);}
+        \PYG{k+kt}{double} \PYG{n+nf}{norm}\PYG{p}{();}
+\PYG{p}{\PYGZcb{};}
+\end{Verbatim}

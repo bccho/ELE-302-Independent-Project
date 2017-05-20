@@ -1,0 +1,72 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kt}{void} \PYG{n+nf}{Accel\PYGZus{}refresh}\PYG{p}{()} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// Gather values for zeroing routine}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{zeroed} \PYG{o}{!=} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}   
+        \PYG{n}{readAccel}\PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{initBufPos}\PYG{p}{]);}
+        \PYG{n}{readGyro}\PYG{p}{(}\PYG{n}{initGyroValsBuf}\PYG{p}{[}\PYG{n}{initBufPos}\PYG{p}{]);}
+        \PYG{n}{initBufPos}\PYG{o}{++}\PYG{p}{;}
+        
+        \PYG{k}{if} \PYG{p}{(}\PYG{n}{initBufPos} \PYG{o}{\PYGZgt{}=} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{,} \PYG{n}{j}\PYG{p}{;}
+            \PYG{c+c1}{// Calculate mean of init data}
+            \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{k}{for} \PYG{p}{(}\PYG{n}{j} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{j} \PYG{o}{\PYGZlt{}} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;} \PYG{n}{j}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                    \PYG{n}{accelOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{j}\PYG{p}{][}\PYG{n}{i}\PYG{p}{];}
+                    \PYG{n}{gyroOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{initGyroValsBuf}\PYG{p}{[}\PYG{n}{j}\PYG{p}{][}\PYG{n}{i}\PYG{p}{];}
+                \PYG{p}{\PYGZcb{}}
+                \PYG{n}{accelOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/=} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;}
+                \PYG{n}{gyroOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/=} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+
+             \PYG{c+c1}{// Calculate correlation coefficients}
+            \PYG{k+kt}{int} \PYG{n}{zxAccelInner} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k+kt}{int} \PYG{n}{zyAccelInner} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k+kt}{int} \PYG{n}{zAccelNormSquare} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+            \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+                \PYG{n}{zxAccelInner} \PYG{o}{+=} \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])} \PYG{o}{*} 
+                                \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])} \PYG{o}{/} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;}
+                \PYG{n}{zyAccelInner} \PYG{o}{+=} \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])} \PYG{o}{*} 
+                                \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])} \PYG{o}{/} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;}
+                \PYG{n}{zAccelNormSquare} \PYG{o}{+=} \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])} \PYG{o}{*} 
+                                    \PYG{p}{(}\PYG{n}{initAccelValsBuf}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])} \PYG{o}{/} \PYG{n}{NUM\PYGZus{}ZERO\PYGZus{}READINGS}\PYG{p}{;}
+            \PYG{p}{\PYGZcb{}}
+            \PYG{k+kt}{double} \PYG{n}{zxCorrelationAccel} \PYG{o}{=} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{zxAccelInner} \PYG{o}{/} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{zAccelNormSquare}\PYG{p}{;}
+            \PYG{k+kt}{double} \PYG{n}{zyCorrelationAccel} \PYG{o}{=} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{zyAccelInner} \PYG{o}{/} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{zAccelNormSquare}\PYG{p}{;}
+            
+            \PYG{n}{zeroed} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{else} \PYG{k}{if} \PYG{p}{(}\PYG{n}{zeroed} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k+kt}{int} \PYG{n}{i}\PYG{p}{;}
+        
+        \PYG{c+c1}{// Subtract oldest vals from average}
+        \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{accelValAvg}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/} \PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{;}
+            \PYG{n}{gyroValAvg}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{gyroValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/} \PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Get new vals}
+        \PYG{n}{readAccel}\PYG{p}{(}\PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{]);}
+        \PYG{n}{readGyro}\PYG{p}{(}\PYG{n}{gyroValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{]);}
+        
+        \PYG{c+c1}{// Subtract means}
+        \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{accelOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{];}
+            \PYG{n}{gyroValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{gyroOffset}\PYG{p}{[}\PYG{n}{i}\PYG{p}{];}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Decorrelate}
+        \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{n}{zxCorrelationAccel}\PYG{p}{;}
+        \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZhy{}=} \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{n}{zyCorrelationAccel}\PYG{p}{;}
+        
+        \PYG{c+c1}{// Add new vals to average}
+        \PYG{k}{for} \PYG{p}{(}\PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{;} \PYG{n}{i}\PYG{o}{++}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+            \PYG{n}{accelValAvg}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{accelValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/} \PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{;}
+            \PYG{n}{gyroValAvg}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{gyroValsBuf}\PYG{p}{[}\PYG{n}{bufPos}\PYG{p}{][}\PYG{n}{i}\PYG{p}{]} \PYG{o}{/} \PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{;}
+        \PYG{p}{\PYGZcb{}}
+        
+        \PYG{c+c1}{// Increment buffer counter}
+        \PYG{n}{bufPos} \PYG{o}{=} \PYG{p}{(}\PYG{n}{bufPos} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{n}{AVG\PYGZus{}BUF\PYGZus{}LEN}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}    
+\end{Verbatim}

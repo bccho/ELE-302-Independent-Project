@@ -1,0 +1,52 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{if} \PYG{p}{(}\PYG{n}{goToTarget}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{int} \PYG{n}{newCounterVal} \PYG{o}{=} \PYG{n}{Counter\PYGZus{}Time\PYGZus{}ReadCounter}\PYG{p}{();}
+    \PYG{k+kt}{int} \PYG{n}{countsElapsed} \PYG{o}{=} \PYG{n}{oldCounterVal} \PYG{o}{\PYGZhy{}} \PYG{n}{newCounterVal}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{countsElapsed} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{countsElapsed} \PYG{o}{+=} \PYG{l+m+mi}{65535}\PYG{p}{;}
+    \PYG{n}{timeElapsed} \PYG{o}{+=} \PYG{p}{(}\PYG{k+kt}{double}\PYG{p}{)} \PYG{n}{countsElapsed} \PYG{o}{/} \PYG{l+m+mf}{100000.0}\PYG{p}{;}
+    \PYG{n}{oldCounterVal} \PYG{o}{=} \PYG{n}{newCounterVal}\PYG{p}{;}
+    
+    \PYG{k+kt}{double} \PYG{n}{xDist} \PYG{o}{=} \PYG{p}{(}\PYG{n}{target}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{currentPos}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]);}
+    \PYG{k+kt}{double} \PYG{n}{yDist} \PYG{o}{=} \PYG{p}{(}\PYG{n}{target}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{currentPos}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{yDist} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{yDist} \PYG{o}{=} \PYG{l+m+mf}{0.0000001}\PYG{p}{;}
+    \PYG{n}{heading} \PYG{o}{=} \PYG{n}{atan}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{n}{xDist}\PYG{o}{/}\PYG{n}{yDist}\PYG{p}{);}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{yDist} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{heading} \PYG{o}{+=} \PYG{n}{M\PYGZus{}PI}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{dist} \PYG{o}{=} \PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{xDist}\PYG{o}{*}\PYG{n}{xDist} \PYG{o}{+} \PYG{n}{yDist}\PYG{o}{*}\PYG{n}{yDist}\PYG{p}{);}
+    \PYG{n}{magnitude} \PYG{o}{=} \PYG{n}{P}\PYG{o}{*}\PYG{n}{dist}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{magnitude} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{magnitude} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+    
+    \PYG{c+c1}{//targetAngle = M\PYGZus{}PI/2;}
+    
+    \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{n}{enableGyro} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+    
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{dist} \PYG{o}{\PYGZlt{}} \PYG{n}{targetMargin}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{goToTarget} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{n}{magnitude} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Target Reached in \PYGZpc{}fs}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{timeElapsed}\PYG{p}{);}
+        \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+    
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{timeElapsed} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{goToTarget} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{n}{magnitude} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Time Up}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+    \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{timeElapsed} \PYG{o}{\PYGZgt{}} \PYG{n}{targetTime} \PYG{o}{\PYGZhy{}} \PYG{n}{flickTime} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{o}{!}\PYG{n}{rotOn} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{timeElapsed} \PYG{o}{\PYGZlt{}} \PYG{n}{targetTime}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{rotation} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+        \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Rot on}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{n}{rotOn} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{timeElapsed} \PYG{o}{\PYGZgt{}} \PYG{n}{targetTime} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{rotOn}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{rotation} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+        \PYG{n}{sprintf}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{,} \PYG{l+s}{\PYGZdq{}Rot off}\PYG{l+s+se}{\PYGZbs{}n}\PYG{l+s}{\PYGZdq{}}\PYG{p}{);}
+        \PYG{n}{terminal} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{UART\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{)} \PYG{o}{:} \PYG{n}{UART\PYGZus{}Pi\PYGZus{}PutString}\PYG{p}{(}\PYG{n}{strbuffer}\PYG{p}{);}
+        \PYG{n}{rotOn} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

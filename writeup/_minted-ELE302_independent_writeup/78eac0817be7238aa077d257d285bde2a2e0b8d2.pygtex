@@ -1,0 +1,25 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{// Predict time when ball will first bounce}
+\PYG{c+c1}{//   bz: 3\PYGZhy{}vector, z coefficients for naive kinematic fit}
+\PYG{k+kt}{double} \PYG{n+nf}{predictBounceTime}\PYG{p}{(}\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{bz}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{z0}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// Solves quadratic equation}
+    \PYG{c+c1}{//   z(t) = z(0) + vz(0) t + 0.5 g t\PYGZca{}2 = 0}
+    \PYG{k+kt}{double} \PYG{n}{g} \PYG{o}{=} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{2}\PYG{p}{;} \PYG{c+c1}{// G\PYGZus{}ACC * 1000;}
+    \PYG{k}{return} \PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{1.0} \PYG{o}{/} \PYG{n}{g}\PYG{p}{)} \PYG{o}{*} \PYG{p}{(}\PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{+} \PYG{n}{std}\PYG{o}{::}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{),} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{2} \PYG{o}{*} \PYG{n}{g} \PYG{o}{*} \PYG{p}{(}\PYG{n}{z0} \PYG{o}{\PYGZhy{}} \PYG{n}{BALL\PYGZus{}DIAM} \PYG{o}{/} \PYG{l+m+mi}{2}\PYG{p}{)));}
+\PYG{p}{\PYGZcb{}}
+
+\PYG{c+c1}{// Predict location of first bounce}
+\PYG{c+c1}{//   bx, by, bz: vectors of length 2, 2, 3 respectively;}
+\PYG{c+c1}{//               coefficients of naive kinematic fit}
+\PYG{c+c1}{//   pt1: position of ball at time 0; point on which bx, by, bz are based}
+\PYG{n}{Point3D} \PYG{n+nf}{predictBounceLocation}\PYG{p}{(}\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{bx}\PYG{p}{,} \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{by}\PYG{p}{,} \PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec}\PYG{o}{\PYGZam{}} \PYG{n}{bz}\PYG{p}{,}
+        \PYG{n}{Point3D}\PYG{o}{\PYGZam{}} \PYG{n}{pt1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}bounce} \PYG{o}{=} \PYG{n}{predictBounceTime}\PYG{p}{(}\PYG{n}{bz}\PYG{p}{,} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{());}
+    \PYG{k+kt}{double} \PYG{n}{newx} \PYG{o}{=} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getX}\PYG{p}{()} \PYG{o}{+} \PYG{n}{bx}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}bounce}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{newy} \PYG{o}{=} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getY}\PYG{p}{()} \PYG{o}{+} \PYG{n}{by}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}bounce}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{newz} \PYG{o}{=} \PYG{n}{pt1}\PYG{p}{.}\PYG{n}{getZ}\PYG{p}{()} \PYG{o}{+} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{n}{t\PYGZus{}bounce}
+        \PYG{o}{+} \PYG{n}{bz}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{*} \PYG{n}{std}\PYG{o}{::}\PYG{n}{pow}\PYG{p}{(}\PYG{n}{t\PYGZus{}bounce}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{);}
+
+    \PYG{k}{return} \PYG{n}{Point3D}\PYG{p}{(}\PYG{n}{newx}\PYG{p}{,} \PYG{n}{newy}\PYG{p}{,} \PYG{n}{newz}\PYG{p}{,} \PYG{n}{t\PYGZus{}bounce}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

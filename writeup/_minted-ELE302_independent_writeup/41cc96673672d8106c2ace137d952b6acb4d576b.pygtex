@@ -1,0 +1,66 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{// direction and current angle are CCW w.r.t global forward (in rads), }
+\PYG{c+c1}{// magnitude is from 0 to 1, angleMag is CCW}
+\PYG{k}{static} \PYG{k+kt}{void} \PYG{n+nf}{driveMagPhase}\PYG{p}{(}\PYG{k+kt}{double} \PYG{n}{direction}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{magnitude}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{angleMag}\PYG{p}{,} \PYG{k+kt}{double} \PYG{n}{currentAngle}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// angle of drive CCW w.r.t the axis formed by the front right and back left wheels}
+    \PYG{k+kt}{double} \PYG{n}{angle} \PYG{o}{=} \PYG{n}{fmod}\PYG{p}{(}\PYG{n}{direction} \PYG{o}{\PYGZhy{}} \PYG{n}{currentAngle} \PYG{o}{+} \PYG{p}{(}\PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{4}\PYG{p}{),} \PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{M\PYGZus{}PI}\PYG{p}{);}
+    \PYG{n}{angle} \PYG{o}{=} \PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{angle} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n+nl}{M\PYGZus{}PI} \PYG{p}{:} \PYG{n}{angle}\PYG{p}{;}
+    
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{angleMag} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{angleMag} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{angleMag} \PYG{o}{\PYGZlt{}} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{angleMag} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{magnitude} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{magnitude} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{magnitude} \PYG{o}{\PYGZlt{}} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{magnitude} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{;}
+    
+    \PYG{c+c1}{// 1 is dominant, 0 is non\PYGZhy{}dominant, motor 4 is lsb}
+    \PYG{n}{uint8} \PYG{n}{dirDominant} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{fabs}\PYG{p}{(}\PYG{n}{tan}\PYG{p}{(}\PYG{n}{angle}\PYG{p}{))} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{n}{dirDominant} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{n}{b0101}\PYG{p}{;}
+    \PYG{k}{else} \PYG{n}{dirDominant} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{n}{b1010}\PYG{p}{;}
+    
+    \PYG{c+c1}{// 0 is backward, 1 is forward}
+    \PYG{n}{uint8} \PYG{n}{directionChangeDir} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{((}\PYG{n}{angle} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{||} \PYG{p}{(}\PYG{n}{angle} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{3}\PYG{o}{*}\PYG{n}{M\PYGZus{}PI}\PYG{o}{/}\PYG{l+m+mi}{2} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{M\PYGZus{}PI}\PYG{p}{))} \PYG{n}{directionChangeDir} \PYG{o}{|=} \PYG{l+m+mi}{0}\PYG{n}{b1010}\PYG{p}{;}
+    \PYG{k}{else} \PYG{n}{directionChangeDir} \PYG{o}{\PYGZam{}=} \PYG{l+m+mi}{0}\PYG{n}{b0101}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{angle} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{o}{\PYGZam{}\PYGZam{}} \PYG{n}{angle} \PYG{o}{\PYGZlt{}} \PYG{n}{M\PYGZus{}PI}\PYG{p}{)} \PYG{n}{directionChangeDir} \PYG{o}{|=} \PYG{l+m+mi}{0}\PYG{n}{b0101}\PYG{p}{;}
+    \PYG{k}{else} \PYG{n}{directionChangeDir} \PYG{o}{\PYGZam{}=} \PYG{l+m+mi}{0}\PYG{n}{b1010}\PYG{p}{;}    
+    
+    \PYG{c+c1}{// 0 is backward, 1 is forward}
+    \PYG{n}{uint8} \PYG{n}{angleChangeDir} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{angleMag} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{n}{angleChangeDir} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{n}{b0110}\PYG{p}{;}
+    \PYG{k}{else} \PYG{n}{angleChangeDir} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{n}{b1001}\PYG{p}{;}
+
+    \PYG{c+c1}{// 1 is dominant, 0 is non\PYGZhy{}dominant}
+    \PYG{n}{uint8} \PYG{n}{angleDominant} \PYG{o}{=} \PYG{o}{\PYGZti{}}\PYG{p}{(}\PYG{n}{directionChangeDir} \PYG{o}{\PYGZca{}} \PYG{n}{angleChangeDir}\PYG{p}{);}
+    \PYG{n}{uint8} \PYG{n}{dominant} \PYG{o}{=} \PYG{n}{dirDominant} \PYG{o}{\PYGZam{}} \PYG{n}{angleDominant}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{dominantNum} \PYG{o}{=} \PYG{p}{(}\PYG{n}{dominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{8}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{0} \PYG{o}{:} \PYG{p}{(}\PYG{n}{dominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{4}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{1} \PYG{o}{:} \PYG{p}{(}\PYG{n}{dominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{2} \PYG{o}{:} \PYG{l+m+mi}{3}\PYG{p}{;}
+    \PYG{n}{uint8} \PYG{n}{offDominant} \PYG{o}{=} \PYG{o}{\PYGZti{}}\PYG{n}{dirDominant} \PYG{o}{\PYGZam{}} \PYG{n}{angleDominant}\PYG{p}{;}
+    \PYG{k+kt}{int} \PYG{n}{offDominantNum} \PYG{o}{=} \PYG{p}{(}\PYG{n}{offDominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{8}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{0} \PYG{o}{:} \PYG{p}{(}\PYG{n}{offDominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{4}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{1} \PYG{o}{:} \PYG{p}{(}\PYG{n}{offDominant} \PYG{o}{\PYGZam{}} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{2} \PYG{o}{:} \PYG{l+m+mi}{3}\PYG{p}{;}    
+    
+    \PYG{c+c1}{// Calculate mags}
+    \PYG{k+kt}{double} \PYG{n}{domMag} \PYG{o}{=} \PYG{p}{(}\PYG{n}{magnitude} \PYG{o}{+} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{));}
+    \PYG{k}{if} \PYG{p}{(}\PYG{n}{domMag} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{n}{angleMag} \PYG{o}{/=} \PYG{n}{domMag}\PYG{p}{;}
+        \PYG{n}{domMag} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+    \PYG{k+kt}{double} \PYG{n}{domPartnerMag} \PYG{o}{=} \PYG{n}{domMag} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{);}
+    \PYG{k+kt}{double} \PYG{n}{offMultiplier} \PYG{o}{=} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{tan}\PYG{p}{(}\PYG{n}{angle}\PYG{p}{));}
+    \PYG{n}{offMultiplier} \PYG{o}{=} \PYG{n}{offMultiplier} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1} \PYG{o}{?} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{/}\PYG{n}{offMultiplier}\PYG{p}{)} \PYG{o}{:} \PYG{n}{offMultiplier}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{offDomMag} \PYG{o}{=} \PYG{p}{(}\PYG{n}{domMag} \PYG{o}{\PYGZhy{}} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{))} \PYG{o}{*} \PYG{n}{offMultiplier} \PYG{o}{+} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{);}
+    \PYG{k+kt}{double} \PYG{n}{offDomPartnerMag} \PYG{o}{=} \PYG{p}{(}\PYG{n}{domMag} \PYG{o}{\PYGZhy{}} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{))} \PYG{o}{*} \PYG{n}{offMultiplier} \PYG{o}{\PYGZhy{}} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{angleMag}\PYG{p}{);}
+    
+    \PYG{c+c1}{// Assign mags}
+    \PYG{k+kt}{double} \PYG{n}{mags}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{];}
+    \PYG{n}{mags}\PYG{p}{[}\PYG{n}{dominantNum}\PYG{p}{]} \PYG{o}{=} \PYG{n}{domMag}\PYG{p}{;}
+    \PYG{n}{mags}\PYG{p}{[(}\PYG{n}{dominantNum} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{=} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{domPartnerMag}\PYG{p}{);}
+    \PYG{n}{mags}\PYG{p}{[}\PYG{n}{offDominantNum}\PYG{p}{]} \PYG{o}{=} \PYG{n}{offDomMag}\PYG{p}{;}
+    \PYG{n}{mags}\PYG{p}{[(}\PYG{n}{offDominantNum} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{=} \PYG{n}{fabs}\PYG{p}{(}\PYG{n}{offDomPartnerMag}\PYG{p}{);}
+    
+    \PYG{c+c1}{// Find dirs}
+    \PYG{k+kt}{int} \PYG{n}{dirs}\PYG{p}{[}\PYG{l+m+mi}{4}\PYG{p}{];}
+    \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{dominantNum}\PYG{p}{]} \PYG{o}{=} \PYG{p}{((}\PYG{n}{dominant} \PYG{o}{\PYGZam{}} \PYG{n}{directionChangeDir}\PYG{p}{)} \PYG{o}{!=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{1} \PYG{o}{:} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{offDominantNum}\PYG{p}{]} \PYG{o}{=} \PYG{p}{((}\PYG{n}{offDominant} \PYG{o}{\PYGZam{}} \PYG{n}{directionChangeDir}\PYG{p}{)} \PYG{o}{!=} \PYG{l+m+mi}{0}\PYG{p}{)} \PYG{o}{?} \PYG{l+m+mi}{1} \PYG{o}{:} \PYG{l+m+mi}{0}\PYG{p}{;}
+    \PYG{n}{dirs}\PYG{p}{[(}\PYG{n}{dominantNum} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{=} \PYG{n}{domPartnerMag} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{dominantNum}\PYG{p}{]} \PYG{o}{:} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{dominantNum}\PYG{p}{];}
+    \PYG{n}{dirs}\PYG{p}{[(}\PYG{n}{offDominantNum} \PYG{o}{+} \PYG{l+m+mi}{2}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{4}\PYG{p}{]} \PYG{o}{=} \PYG{n}{offDomPartnerMag} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{o}{?} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{offDominantNum}\PYG{p}{]} \PYG{o}{:} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{dirs}\PYG{p}{[}\PYG{n}{offDominantNum}\PYG{p}{];}
+    
+    \PYG{n}{drive}\PYG{p}{(}\PYG{n}{dirs}\PYG{p}{,} \PYG{n}{mags}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{if} \PYG{p}{(}\PYG{n}{accelerationLimitEnabled}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{k}{static} \PYG{k+kt}{double} \PYG{n}{oldMag}\PYG{p}{;}
+    \PYG{k+kt}{double} \PYG{n}{setMag} \PYG{o}{=} \PYG{p}{(}\PYG{n}{fabs}\PYG{p}{(}\PYG{n}{magnitude}\PYG{o}{\PYGZhy{}}\PYG{n}{oldMag}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{n}{accelLimit}\PYG{p}{)} \PYG{o}{?} \PYG{p}{(}\PYG{n}{magnitude} \PYG{o}{\PYGZhy{}} \PYG{n}{oldMag}\PYG{p}{)}\PYG{o}{/}\PYG{n}{fabs}\PYG{p}{(}\PYG{n}{magnitude}\PYG{o}{\PYGZhy{}}\PYG{n}{oldMag}\PYG{p}{)} \PYG{o}{*} \PYG{n}{accelLimit} \PYG{o}{+} \PYG{n+nl}{oldMag} \PYG{p}{:} \PYG{n}{magnitude}\PYG{p}{;}
+    \PYG{n}{driveMagPhase}\PYG{p}{(}\PYG{n}{heading}\PYG{p}{,} \PYG{n}{setMag}\PYG{p}{,} \PYG{n}{rotation}\PYG{p}{,} \PYG{n}{enableGyro} \PYG{o}{==} \PYG{l+m+mi}{1} \PYG{o}{?} \PYG{n+nl}{currentAngle} \PYG{p}{:} \PYG{l+m+mi}{0}\PYG{p}{);}
+    \PYG{n}{oldMag} \PYG{o}{=} \PYG{n}{setMag}\PYG{p}{;}
+\PYG{p}{\PYGZcb{}}
+\PYG{k}{else} \PYG{p}{\PYGZob{}}
+    \PYG{n}{driveMagPhase}\PYG{p}{(}\PYG{n}{heading}\PYG{p}{,} \PYG{n}{magnitude}\PYG{p}{,} \PYG{n}{rotation}\PYG{p}{,} \PYG{n}{enableGyro} \PYG{o}{==} \PYG{l+m+mi}{1} \PYG{o}{?} \PYG{n+nl}{currentAngle} \PYG{p}{:} \PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

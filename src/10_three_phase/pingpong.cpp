@@ -299,7 +299,7 @@ int main(int argc, char *argv[]) {
         /* Detect ball in 3D */
         std::queue<std::pair<int, int> > plausiblePairs;
         for (int ind0 = 0; ind0 < nBlocks0; ind0++) {
-            for (int ind1 = 0; ind1 < nBlocks0; ind1++) {
+            for (int ind1 = 0; ind1 < nBlocks1; ind1++) {
                 int w0 = pixy0.blocks[ind0].width;
                 int h0 = pixy0.blocks[ind0].height;
                 int w1 = pixy1.blocks[ind1].width;

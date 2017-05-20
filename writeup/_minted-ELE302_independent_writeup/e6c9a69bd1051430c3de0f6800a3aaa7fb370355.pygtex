@@ -1,0 +1,15 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/* Validate with trajectory prediction */}
+\PYG{n}{Point3D} \PYG{n}{ptExp}\PYG{p}{;}
+\PYG{c+c1}{// don\PYGZsq{}t check trajectory if we don\PYGZsq{}t have a reliable model}
+\PYG{k}{if} \PYG{p}{(}\PYG{n}{points}\PYG{p}{.}\PYG{n}{size}\PYG{p}{()} \PYG{o}{\PYGZgt{}=} \PYG{n}{MIN\PYGZus{}REGRESSION\PYGZus{}POINTS}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{c+c1}{// Max change in position from expected next position}
+    \PYG{n}{Point3D} \PYG{n}{ptFirst} \PYG{o}{=} \PYG{n}{points}\PYG{p}{.}\PYG{n}{front}\PYG{p}{();}
+    \PYG{k+kt}{double} \PYG{n}{t\PYGZus{}first} \PYG{o}{=} \PYG{n}{ptFirst}\PYG{p}{.}\PYG{n}{getT}\PYG{p}{();}
+    \PYG{n}{ptExp} \PYG{o}{=} \PYG{n}{predictPosition}\PYG{p}{(}\PYG{n}{beta\PYGZus{}x}\PYG{p}{,} \PYG{n}{beta\PYGZus{}y}\PYG{p}{,} \PYG{n}{beta\PYGZus{}z}\PYG{p}{,} \PYG{n}{beta\PYGZus{}R}\PYG{p}{,} \PYG{n}{ptFirst}\PYG{p}{,} \PYG{n}{t\PYGZus{}elapsed}\PYG{p}{);}
+    \PYG{c+c1}{// Current ball position is too far from expected position}
+    \PYG{k}{if} \PYG{p}{((}\PYG{n}{ptNow} \PYG{o}{\PYGZhy{}} \PYG{n}{ptExp}\PYG{p}{).}\PYG{n}{maxAbsSpatial}\PYG{p}{()} \PYG{o}{\PYGZgt{}} \PYG{n}{MAX\PYGZus{}POS\PYGZus{}DIFF}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+        \PYG{k}{continue}\PYG{p}{;}
+    \PYG{p}{\PYGZcb{}}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

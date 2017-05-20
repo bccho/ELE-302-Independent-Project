@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+cm}{/* Perform regression to estimate new kinematic coefficients */}
+\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{beta\PYGZus{}x} \PYG{o}{=} \PYG{p}{(}\PYG{n}{t}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t}\PYG{p}{).}\PYG{n}{i}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{res\PYGZus{}x}\PYG{p}{;}
+\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{beta\PYGZus{}y} \PYG{o}{=} \PYG{p}{(}\PYG{n}{t}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t}\PYG{p}{).}\PYG{n}{i}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{res\PYGZus{}y}\PYG{p}{;}
+\PYG{n}{arma}\PYG{o}{::}\PYG{n}{vec} \PYG{n}{beta\PYGZus{}z} \PYG{o}{=} \PYG{p}{(}\PYG{n}{t2}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t2}\PYG{p}{).}\PYG{n}{i}\PYG{p}{()} \PYG{o}{*} \PYG{n}{t2}\PYG{p}{.}\PYG{n}{t}\PYG{p}{()} \PYG{o}{*} \PYG{n}{res\PYGZus{}z}\PYG{p}{;}
+\end{Verbatim}
