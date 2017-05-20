@@ -1,0 +1,81 @@
+Software
+
+Motor Control
+
+The low-level motor control is handled by the function \verb{drive()}. It simply takes a magnitude and direction for each motor and interfaces with the programmable hardware to do it.
+
+\inputminted[breaklines]{c}{files/excerpts/drive.c}
+
+The high level drive control is in function \verb{driveMagPhase()}, and implements the equations discussed in section [the theory section]. \verb{driveMagPhase()} implements the equations in terms of the dominant (\textit{i.e.}, greatest absolute magnitude) motor. The dominant partner is then the motor on the same axis as the dominant motor. The off dominant motor is the motor of greatest magnitude on the other axis, and the off dominant partner is the remaining motor. The first half of the function uses some bit masking to determine which motor is the dominant one, first by figuring out which axis is dominant, and then figuring out which motor on that axis has the greater magnitude. Once these designations have been found, the magnitudes and directions of each motor can be calculated basically independently. The magnitude of the dominant motor is $\max{(1, M + |s|)}$, the magnitude of the dominant partner is $|M_{dominant} - 2|s||$, the magnitude of the off dominant motor is $(M_{dominant} - |s|)a +|s|$, where $a = \min{(|\tan{(\alpha - \theta + \frac{\pi}{4})}|, 1/|\tan{(\alpha - \theta + \frac{\pi}{4})}|)}$, and the magnitude of the off dominant partner is $(M_{dominant} - |s|)a -|s|$.
+
+Then the function uses some of the bit masks from earlier to find the final directions of each motor, and sends the completed direction-magnitude pairs to \verb{drive()}.
+
+\inputminted[breaklines]{c}{files/excerpts/driveMagPhase.c}
+
+
+Dead Reckoning
+
+Reading the accelerometer and gyroscope is handled by the \verb{accel.c} file, which is loosely ported from an Adafruit library. The \verb{Accel_init()} function sets up the accelerometer and gyroscope. It sets the sample rate of the accelerometer, enables X, Y, and Z directions, and sets its range to $\pm 2g$. It also enables the gyro channels, sets up the limits for the built-in low- and high-pass filters, and sets its range to $\pm \SI{245}{\degree\per\second}. The high-pass filter cutoff is 7.2Hz, which kills any drift in the gyroscope readings. There are many private helper functions that handle the details of the I2C interface and getting the raw data from the accelerometer and gyroscope. 
+
+The data from the accelerometer, though, is very noisy, so we do a fair amount of noise reduction in the function \verb{Accel_refresh()}. This function is called periodically by \verb{main.c}, and is the main function used to update the sensor readings. The first part of the function is an initialization step. The function takes the first \verb{NUM_ZERO_READINGS}, $1000$, accelerometer readings and uses them to create denoising functions. First, we simply take the (3 dimensional) mean of all the readings and subtract that from all future readings. Unlike the gyro, the accelerometer does not have a built in high-pass filter, so we have to do this subtraction manually. 
+
+Next, we noticed that the noise in the x and y directions almost perfects anti-correlates with the noise in the z direction as shown in Figure [Accelerometer Correlation Plots]. Since we know that the z acceleration should always be zero, we can use the z acceleration reading to remove some of the noise from the x and y readings. Since our data after having the mean subtracted is zero centered, the correlations can simply be calculated by $C_{xz} = \frac{x \cdot z}{||z||^2}$ and $C_{yz} = \frac{y \cdot z}{||z||^2}$, where x, y, and z are vectors of the readings. The readings can then be decorrelated as follows: $x_{decorr} = x - zC_{xz}$ and $y_{decorr} = y - zC_{yz}$. Figure[Accelerometer Correlation Plots] shows the result of this decorrelation. The decorrelation reduces the noise of the sensor by about a factor of two. All of the preceding calculations had to be performed using integer arithmetic, since double arrays were too large to fir on the PSoC’s limited memory.
+
+Once the means and correlation coefficients have been calculated over the first \verb{NUM_ZERO_READINGS} readings, \verb{Accel_refresh()} simply gets new raw readings and corrects them according to the calculated means and correlation coefficients. The public functions \verb{Accel_getAccel()} and \verb{Accel_getGyro()} are then used to get the corrected readings.
+
+\inputminted[breaklines]{c}{files/excerpts/Accel_refresh.c}
+
+\verb{main.c} uses the \verb{Counter_Refresh} counter to call verb{Accel_refresh()}, and to translate the raw accelerometer data into usable data as described in section[theoretical section]. The gyroscope returns angular velocity data, so it also runs a single integrator on the angular velocity to get angular position. The integrators are discrete, and since the integration is done at a regular interval, they only need to keep a running sum, multiplied by the time between sums.
+
+\inputminted[breaklines]{c}{files/excerpts/accel_gyro_handling.c}
+
+
+Fine Tuning Control
+
+During testing, we noticed that if the car went to full speed immediately, it would slip a lot before it got traction. We decided the best way to limit this effect would be to put a cap on the maximum allowed acceleration. Since the motor speeds need to be updated very frequently (all the equations described above and in section [theoretical section] are only valid instantaneously), we simply implemented the acceleration cap in the same spot as we updated the motor speeds. We run through the update loop 100 times per second, so we simply keep track of the directional magnitude (M, in all the equations) at the last loop, and do not let the new directional magnitude exceed the old one by more than some fixed amount A. We settled on using $A = 0.03$, which allows the car to reach full speed in \SI{0.33}{\sec}.
+
+\inputminted[breaklines]{c}{files/excerpts/accelLimit.c}
+
+The final major part of the drives to robot to a given location in global coordinates. With an omni-drive, this is actually very easy. It simply calculates the angle between the car’s current position and the desired position, and then drives directly in that direction with a magnitude scaled by the distance left. It updates the required position and magnitude 100 times per second, so it continuously corrects for any errors in the drive. Once the car reaches the target location within a set margin, \SI{5}{\centi\meters}, for our final tests, it stops. Since our goal was to be able to hit a ping ping ball, this code also contains a small “flick” routine. Given a time at which to flick, the robot will start rotating just before the target time, and stop rotating at the target time, creating a small flicking motion designed to hit the ball. We also added a safety timeout to this code to automatically stop if the target had not been reached in 2 seconds, to stop runaway behavior.
+
+\inputminted[breaklines]{c}{files/excerpts/goToTarget.c}
+
+
+Serial Communication
+
+We used serial communication both for debugging and for communicating between the PSoC and the Raspberry Pi. The table below shows all the serial commands used.
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{@{}ll@{}}
+        \toprule
+        \textbf{Command} & \textbf{Description} \\ \midrule
+        \texttt{CTx.y} & Set motor x to throttle y \\
+        \texttt{CPx} & Set motor PWM period to x \\ \midrule
+	\texttt{w} & Drive forward \\
+	\texttt{s} & Drive backward \\
+	\texttt{a} & Drive left \\
+	\texttt{d} & Drive right \\
+	\texttt{q or Q} & Stop \\
+	\texttt{c} & Rotate right \\
+	\texttt{z} & Rotate left \\
+	\texttt{x} & Stop rotating \\
+	\texttt{CMx} & Change magnitude of driving to x \\
+	\texttt{CHx} & Change heading of driving to x (in rads) \\
+	\texttt{CRx} & Set rotation speed to x \\ \midrule
+	\texttt{R} & Reset inertial tracking \\
+	\texttt{P} & Print inertial tracking variables \\
+	\texttt{EG} & Enable gyro \\
+	\texttt{DG} & Disable gyro \\
+	\texttt{EAL} & Enable acceleration limit \\ \midrule
+	\texttt{DAL} & Disable acceleration limit \\
+	\texttt{SALx} & Set acceleration limit to x \\
+	\texttt{GO(x, y, t, \theta} & Go to position (x, y) within time t and set paddle angle to \theta \\
+        \texttt{CTMx} & Change stop margin for arriving at target to x \\
+        \texttt{SFT} & Set time of rotation need for flicking to x \\ \bottomrule
+    \end{tabular}
+    \caption{\textbf{Table of serial interface commands.}}
+    \label{tbl:commands}
+\end{table}
+
+\inputminted[breaklines]{c}{files/excerpts/parseMessage.c}
